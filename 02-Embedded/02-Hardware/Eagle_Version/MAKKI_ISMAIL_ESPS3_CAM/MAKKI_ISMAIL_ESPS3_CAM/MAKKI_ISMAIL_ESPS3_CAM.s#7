@@ -5342,7 +5342,7 @@ DIN A4, landscape with location and doc. field</description>
 <part name="TP2" library="microbuilder" deviceset="TESTPOINT" device="ROUND1.5MMNO"/>
 <part name="TP3" library="microbuilder" deviceset="TESTPOINT" device="ROUND1.5MMNO"/>
 <part name="TP4" library="microbuilder" deviceset="TESTPOINT" device="ROUND1.5MMNO"/>
-<part name="FRAME3" library="frames" library_urn="urn:adsk.eagle:library:229" deviceset="A4L-LOC" device=""/>
+<part name="FRAME3" library="frames" library_urn="urn:adsk.eagle:library:229" deviceset="A4L-LOC" device="" value="By Ali MAKKI"/>
 </parts>
 <sheets>
 <sheet>
@@ -5367,8 +5367,6 @@ DIN A4, landscape with location and doc. field</description>
 <wire x1="106.68" y1="48.26" x2="5.08" y2="48.26" width="0.1524" layer="94" style="shortdash"/>
 <text x="43.18" y="45.72" size="1.778" layer="94">LIPO CHARGING</text>
 <text x="119.38" y="45.72" size="1.778" layer="94">LED</text>
-<text x="162.56" y="17.78" size="1.778" layer="94">Created By ENG MAKKI Ali 
-France - alain.makki@gmail.com</text>
 </plain>
 <instances>
 <instance part="C6" gate="G$1" x="30.48" y="144.78" smashed="yes">
