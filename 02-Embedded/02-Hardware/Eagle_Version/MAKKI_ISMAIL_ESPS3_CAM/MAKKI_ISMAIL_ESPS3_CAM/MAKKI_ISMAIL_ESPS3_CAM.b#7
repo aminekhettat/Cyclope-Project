@@ -1029,9 +1029,9 @@ einem neuen Namen ab.</description>
 <param name="RoutingGrid" value="6.25mil"/>
 <param name="AutoGrid" value="1"/>
 <param name="Efforts" value="2"/>
-<param name="TopRouterVariant" value="0"/>
+<param name="TopRouterVariant" value="1"/>
 <param name="tpViaShape" value="round"/>
-<param name="PrefDir.1" value="/"/>
+<param name="PrefDir.1" value="a"/>
 <param name="PrefDir.2" value="0"/>
 <param name="PrefDir.3" value="0"/>
 <param name="PrefDir.4" value="0"/>
@@ -1046,7 +1046,7 @@ einem neuen Namen ab.</description>
 <param name="PrefDir.13" value="0"/>
 <param name="PrefDir.14" value="0"/>
 <param name="PrefDir.15" value="0"/>
-<param name="PrefDir.16" value="/"/>
+<param name="PrefDir.16" value="a"/>
 <param name="cfVia" value="8"/>
 <param name="cfNonPref" value="5"/>
 <param name="cfChangeDir" value="2"/>
@@ -1802,10 +1802,19 @@ einem neuen Namen ab.</description>
 <contactref element="IC2" pad="11"/>
 <wire x1="31.96" y1="35.525" x2="44.63" y2="25.26" width="0" layer="19" extent="1-16"/>
 </signal>
+<signal name="D9">
+<contactref element="IC2" pad="20"/>
+</signal>
 <signal name="D5">
 <contactref element="J1" pad="20"/>
 <contactref element="IC2" pad="9"/>
 <wire x1="32.96" y1="35.525" x2="47.17" y2="25.26" width="0" layer="19" extent="1-16"/>
+</signal>
+<signal name="RX">
+<contactref element="IC2" pad="31"/>
+</signal>
+<signal name="TX">
+<contactref element="IC2" pad="32"/>
 </signal>
 <signal name="RXD0">
 <contactref element="IC2" pad="36"/>
@@ -1829,13 +1838,16 @@ einem neuen Namen ab.</description>
 </signal>
 <signal name="XVCLK">
 <contactref element="J1" pad="13"/>
-<contactref element="IC2" pad="32"/>
-<wire x1="47.17" y1="7.76" x2="29.46" y2="35.525" width="0" layer="19" extent="1-16"/>
+<contactref element="IC2" pad="19"/>
+<wire x1="39.57" y1="18.415" x2="29.46" y2="35.525" width="0" layer="19" extent="1-16"/>
+</signal>
+<signal name="D8">
+<contactref element="IC2" pad="18"/>
 </signal>
 <signal name="D7">
 <contactref element="J1" pad="16"/>
-<contactref element="IC2" pad="31"/>
-<wire x1="45.9" y1="7.76" x2="30.96" y2="35.525" width="0" layer="19" extent="1-16"/>
+<contactref element="IC2" pad="17"/>
+<wire x1="39.57" y1="20.955" x2="30.96" y2="35.525" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="PCLK">
 <contactref element="J1" pad="17"/>
@@ -1899,6 +1911,9 @@ einem neuen Namen ab.</description>
 <wire x1="22.54" y1="40.64" x2="24.96" y2="35.525" width="0" layer="19" extent="1-16"/>
 <wire x1="11.75" y1="40.64" x2="22.54" y2="40.64" width="0" layer="19" extent="1-1"/>
 <wire x1="10.48" y1="38.23" x2="11.75" y2="40.64" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="1.8V">
+<contactref element="IC2" pad="25"/>
 </signal>
 <signal name="N$2">
 <contactref element="LED1" pad="2"/>
