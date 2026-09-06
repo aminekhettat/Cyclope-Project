@@ -1,0 +1,24 @@
+# SolidWorks lock files
+~$*
+*.bak
+
+# Editor and IDE settings
+.vs/
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Android
+*.iml
+.gradle/
+local.properties
+build/
+
+# System
+Thumbs.db
+.DS_Store
