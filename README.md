@@ -138,7 +138,7 @@ preserved**.
 | `02-Embedded/02-Hardware/` | Schematic and PCB layout of the camera board | `Cyclope_ESP32CAM` |
 | `03-Vision/` | YOLO model training, data augmentation, tests | `Cyclope_Vision` |
 | `04-3D_Design/` | SolidWorks parts and STL files for the enclosures | `Cyclope-3D` |
-| `05-Android_app/` | Android application: vision, navigation, voice feedback | `Cyclope_Androis` |
+| `05-MobilApp/` | Mobile applications: vision, navigation, voice feedback. `Android/` holds the current app, `iOS/` is reserved for a future port | `Cyclope_Androis` |
 
 Folder numbering follows the chronological order of the project and fixes the
 display order; it does not imply any dependency between work packages.
@@ -155,7 +155,8 @@ display order; it does not imply any dependency between work packages.
 | `02-Embedded/02-Hardware` | **Altium Designer** (mandatory), parts verified as available at JLCPCB |
 | `03-Vision` | Python 3.10+, Ultralytics, PyTorch |
 | `04-3D_Design` | **SolidWorks** (mandatory) |
-| `05-Android_app` | Android Studio, Kotlin, LiteRT |
+| `05-MobilApp/Android` | Android Studio, Kotlin, LiteRT |
+| `05-MobilApp/iOS` | Xcode, Swift, Core ML - planned, not started |
 
 ### Clone
 
@@ -215,13 +216,13 @@ Image capture and compression, audio recording of voice commands (without
 interpreting them), button handling, wifi link monitoring with a voice alert if
 the connection drops.
 
-### 3. Vision on Android — `05-Android_app`, `03-Vision`
+### 3. Vision on Android — `05-MobilApp/Android`, `03-Vision`
 
 Stream reception, on-device model inference, voice feedback. The student starts
 with the already working DFRobot module from GEN 2, without waiting for the new
 board.
 
-### 4. Pedestrian navigation — `05-Android_app`
+### 4. Pedestrian navigation — `05-MobilApp/Android`
 
 Spoken address input, geocoding through Nominatim, route computation, voice
 guidance through TalkBack, positioning through the Fused Location and Fused

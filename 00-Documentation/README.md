@@ -10,7 +10,7 @@ package, mirroring the top-level layout of the repository.
 | `02-Embedded/` | Meeting notes and specifications for the camera board and its firmware |
 | `03-Vision/` | Dataset notes, training protocols, evaluation results |
 | `04-3D_Design/` | Enclosure design notes, mass budget, print and assembly instructions |
-| `05-Android_app/` | Application specifications, accessibility notes, user-facing behaviour |
+| `05-MobilApp/` | Application specifications, accessibility notes, user-facing behaviour, one folder per platform |
 
 `images/` holds the illustrations used by the root README.
 
