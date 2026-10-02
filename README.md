@@ -237,16 +237,31 @@ M5Stick C Plus serves as the button interface until the final module is ready.
 
 `main` is the reference branch and must always be in working order.
 
-Working branches are prefixed by their domain:
+GEN 3 work takes place on the following branches, created from the current
+`main` baseline. Each branch contains the complete repository; the work areas
+below describe its purpose, not a restriction on which files can be edited.
 
-```
-embedded/…      raspberry/…      vision/…      android/…      design3d/…
-```
+| Branch | Work area |
+|---|---|
+| `CYCLOPE_GEN3_3D` | Clip-on enclosures, mechanical integration and SolidWorks files in `04-3D_Design/` |
+| `CYCLOPE_GEN3_HW` | Schematics, PCB, power supply and buttons in `02-Embedded/02-Hardware/` |
+| `CYCLOPE_GEN3_ESP32CAMSW` | ESP32-S3 camera firmware, audio capture, buttons and wifi in `02-Embedded/01-Software/` |
+| `CYCLOPE_GEN3_AndroidVision` | Android stream reception, on-device detection and voice feedback in `05-MobilApp/Android/`, with model work in `03-Vision/` |
+| `CYCLOPE_GEN3_AndroidNavigation` | Spoken destination, positioning, route guidance and OpenStreetMap contribution in `05-MobilApp/Android/` |
 
-Branches inherited from the original repositories keep that prefix
-(`embedded/AMA_Work`, `vision/text_to_speech`, `raspberry/feat_YOLO_Serveur`, …).
-The `<domain>/main` branches are a snapshot of each repository at merge time and
-are kept as a safety net.
+Collaborators may push commits to GEN 3 branches. Any additional work branch
+must also start with `CYCLOPE_GEN3_`. Open a pull request to `main` when work is
+ready for integration; the repository owner, `aminekhettat`, controls updates
+to `main` and merges into it.
+
+The historical branches (`android/…`, `design3d/…`, `embedded/…`, `raspberry/…`
+and `vision/…`) are preserved as references. Collaborators cannot update or
+delete them, or `main`. GitHub enforces this restriction on all branches outside
+the `CYCLOPE_GEN3_` namespace, with bypass reserved to the repository admin.
+
+The two Android branches share one application: coordinate interface changes
+and integrate them through pull requests. The Raspberry Pi and future iOS port
+have no dedicated GEN 3 work branch in the current scope.
 
 ### Commit messages
 
