@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Cyclope Nav Lab</string>
+    <string name="title_positioning">1. Positioning study (5 sources)</string>
+    <string name="start_logging">Start log</string>
+    <string name="stop_logging">Stop log</string>
+    <string name="mark">Mark point</string>
+    <string name="share_csv">Share CSV</string>
+    <string name="title_navigation">2. Navigation demo</string>
+    <string name="address_hint">Address (stand-in for speech-to-text)</string>
+    <string name="search">Search address (Nominatim)</string>
+    <string name="glasses_buttons">Simulated glasses buttons:</string>
+    <string name="short_press">Short</string>
+    <string name="long_press">Long</string>
+    <string name="double_press">Double</string>
+    <string name="simulate">Simulate walk</string>
+    <string name="stop_nav">Stop</string>
+</resources>

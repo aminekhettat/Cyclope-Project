@@ -1,0 +1,150 @@
+{
+ "code": "Ok",
+ "routes": [
+  {
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.17,
+      48.71
+     ],
+     [
+      2.17,
+      48.7104497
+     ],
+     [
+      2.17,
+      48.7108993
+     ],
+     [
+      2.1720443,
+      48.7108993
+     ]
+    ]
+   },
+   "legs": [
+    {
+     "steps": [
+      {
+       "name": "Rue A",
+       "mode": "walking",
+       "distance": 100.0,
+       "duration": 72.0,
+       "geometry": {
+        "type": "LineString",
+        "coordinates": [
+         [
+          2.17,
+          48.71
+         ],
+         [
+          2.17,
+          48.7104497
+         ],
+         [
+          2.17,
+          48.7108993
+         ]
+        ]
+       },
+       "maneuver": {
+        "type": "depart",
+        "location": [
+         2.17,
+         48.71
+        ],
+        "bearing_before": 0,
+        "bearing_after": 0
+       }
+      },
+      {
+       "name": "Rue B",
+       "mode": "walking",
+       "distance": 150.0,
+       "duration": 108.0,
+       "geometry": {
+        "type": "LineString",
+        "coordinates": [
+         [
+          2.17,
+          48.7108993
+         ],
+         [
+          2.1720443,
+          48.7108993
+         ]
+        ]
+       },
+       "maneuver": {
+        "type": "turn",
+        "modifier": "right",
+        "location": [
+         2.17,
+         48.7108993
+        ],
+        "bearing_before": 0,
+        "bearing_after": 90
+       }
+      },
+      {
+       "name": "Rue B",
+       "mode": "walking",
+       "distance": 0.0,
+       "duration": 0.0,
+       "geometry": {
+        "type": "LineString",
+        "coordinates": [
+         [
+          2.1720443,
+          48.7108993
+         ],
+         [
+          2.1720443,
+          48.7108993
+         ]
+        ]
+       },
+       "maneuver": {
+        "type": "arrive",
+        "modifier": "left",
+        "location": [
+         2.1720443,
+         48.7108993
+        ],
+        "bearing_before": 90,
+        "bearing_after": 0
+       }
+      }
+     ],
+     "distance": 250.0,
+     "duration": 180.0,
+     "summary": "Rue A, Rue B",
+     "weight": 180.0
+    }
+   ],
+   "distance": 250.0,
+   "duration": 180.0,
+   "weight_name": "duration",
+   "weight": 180.0
+  }
+ ],
+ "waypoints": [
+  {
+   "name": "Rue A",
+   "location": [
+    2.17,
+    48.71
+   ],
+   "distance": 1.2
+  },
+  {
+   "name": "Rue B",
+   "location": [
+    2.1720443,
+    48.7108993
+   ],
+   "distance": 0.8
+  }
+ ]
+}

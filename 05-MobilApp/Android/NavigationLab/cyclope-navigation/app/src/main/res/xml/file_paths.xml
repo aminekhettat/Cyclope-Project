@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Folders the "Share CSV" button is allowed to share (FileProvider). -->
+<paths>
+    <external-files-path name="logs" path="." />
+    <files-path name="internal_logs" path="." />
+</paths>
