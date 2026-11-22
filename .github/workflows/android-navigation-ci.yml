@@ -2,9 +2,8 @@
 # Sub-project: 05-MobilApp/Android/NavigationLab/cyclope-navigation
 #
 # Scope notes:
-# - JVM unit tests only (:navigation:testDebugUnitTest). Instrumented tests are
-#   NOT executed here: GitHub-hosted runners have no Android emulator, and the
-#   navigation brick's tests are designed to run offline on the JVM.
+# - JVM quality gates remain in the quality job; app runtime smoke tests run
+#   separately on a macOS Android emulator during a non-blocking trial period.
 # - ktlint runs in report-only mode (ignoreFailures=true in navigation/build.gradle.kts):
 #   existing code is not rewritten for style.
 # - Version single-source rule: cyclopeVersionName/cyclopeVersionCode live in
@@ -13,6 +12,7 @@
 name: NavigationLab CI
 
 on:
+  workflow_dispatch:
   push:
     branches: [ CYCLOPE_GEN3_AndroidNavigation ]
     paths:
@@ -96,4 +96,60 @@ jobs:
         with:
           name: navigation-dokka-html
           path: 05-MobilApp/Android/NavigationLab/cyclope-navigation/navigation/build/dokka/
+          if-no-files-found: warn
+
+  instrumented-tests:
+    name: Instrumented smoke tests (non-blocking trial)
+    runs-on: macos-latest
+    # Trial period: failures are non-blocking until the product owner enables this gate.
+    continue-on-error: true
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: 05-MobilApp/Android/NavigationLab/cyclope-navigation
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run app connectedCheck on Android 35
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: arm64-v8a
+          disable-animations: true
+          emulator-boot-timeout: 900
+          working-directory: 05-MobilApp/Android/NavigationLab/cyclope-navigation
+          script: ./gradlew --no-daemon :app:connectedCheck
+
+      - name: Verify instrumented tests actually ran
+        run: |
+          python3 - <<'PYTHON'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          reports = list(Path("app/build/outputs/androidTest-results/connected").rglob("TEST-*.xml"))
+          cases = [case for report in reports for case in ET.parse(report).iter("testcase")]
+          failed = [case for case in cases if case.find("failure") is not None or case.find("error") is not None]
+          skipped = [case for case in cases if case.find("skipped") is not None]
+          print(f"Instrumented results: {len(cases)} tests, {len(failed)} failed, {len(skipped)} skipped")
+          assert len(cases) >= 2 and not failed and not skipped, "Expected at least two passing runtime smoke tests"
+          PYTHON
+
+      - name: Upload instrumented test reports (HTML + XML)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: navigation-instrumented-test-results
+          path: |
+            05-MobilApp/Android/NavigationLab/cyclope-navigation/app/build/reports/androidTests/connected/
+            05-MobilApp/Android/NavigationLab/cyclope-navigation/app/build/outputs/androidTest-results/connected/
           if-no-files-found: warn
