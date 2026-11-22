@@ -11,8 +11,9 @@ android {
         applicationId = "org.blindsystems.cyclope.navlab"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1"
+        // Single-source version: canonical values live in gradle.properties (see root build.gradle.kts).
+        versionCode = (project.findProperty("cyclopeVersionCode") as String).toInt()
+        versionName = project.findProperty("cyclopeVersionName") as String
     }
 
     buildTypes {
