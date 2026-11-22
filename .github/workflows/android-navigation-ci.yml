@@ -119,6 +119,9 @@ jobs:
       - name: Set up Gradle cache
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Build app and instrumented test APKs
+        run: ./gradlew --no-daemon :app:assembleDebug :app:assembleDebugAndroidTest
+
       - name: Run app connectedCheck on Android 35
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -128,6 +131,7 @@ jobs:
           disable-animations: true
           emulator-boot-timeout: 900
           working-directory: 05-MobilApp/Android/NavigationLab/cyclope-navigation
+          pre-emulator-launch-script: '"$ANDROID_HOME/emulator/emulator" -accel-check'
           script: ./gradlew --no-daemon :app:connectedCheck
 
       - name: Verify instrumented tests actually ran
