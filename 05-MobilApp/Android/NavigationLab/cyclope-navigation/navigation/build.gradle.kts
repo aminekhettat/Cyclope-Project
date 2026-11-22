@@ -9,7 +9,7 @@ plugins {
 // ---------------------------------------------------------------------------
 // JaCoCo: unit-test coverage of the navigation brick (JVM tests only).
 // jacocoTestReport produces XML+HTML under build/reports/jacoco/jacocoTestReport.
-// jacocoTestCoverageVerification enforces the minimum INSTRUCTION coverage.
+// jacocoTestCoverageVerification enforces 80% instruction, line, branch and method coverage.
 // ---------------------------------------------------------------------------
 configure<JacocoPluginExtension> { toolVersion = "0.8.12" }
 
@@ -51,15 +51,18 @@ tasks.register<JacocoReport>("jacocoTestReport") {
 
 tasks.register<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     group = "verification"
-    description = "Enforces the minimum instruction coverage for :navigation (see reports/jacoco)."
+    description = "Enforces 80% instruction, line, branch and method coverage for :navigation."
     dependsOn("jacocoTestReport")
     classDirectories.setFrom(coverageClassDirs)
     executionData.setFrom(coverageExecFiles)
     violationRules {
         rule {
-            limit {
-                counter = "INSTRUCTION"
-                minimum = "0.65".toBigDecimal() // measured baseline 2026-11-22: 68.1% INSTRUCTION; threshold set just below
+            // Whole module, including PositionRecorder: no Android-specific coverage exclusion.
+            listOf("INSTRUCTION", "LINE", "BRANCH", "METHOD").forEach { metric ->
+                limit {
+                    counter = metric
+                    minimum = "0.80".toBigDecimal()
+                }
             }
         }
     }
