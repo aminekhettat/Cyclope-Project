@@ -1,0 +1,99 @@
+# NavigationLab CI - scoped to the Android navigation brick only.
+# Sub-project: 05-MobilApp/Android/NavigationLab/cyclope-navigation
+#
+# Scope notes:
+# - JVM unit tests only (:navigation:testDebugUnitTest). Instrumented tests are
+#   NOT executed here: GitHub-hosted runners have no Android emulator, and the
+#   navigation brick's tests are designed to run offline on the JVM.
+# - ktlint runs in report-only mode (ignoreFailures=true in navigation/build.gradle.kts):
+#   existing code is not rewritten for style.
+# - Version single-source rule: cyclopeVersionName/cyclopeVersionCode live in
+#   gradle.properties; verifyVersionSingleSource is the anti-drift gate.
+
+name: NavigationLab CI
+
+on:
+  push:
+    branches: [ CYCLOPE_GEN3_AndroidNavigation ]
+    paths:
+      - "05-MobilApp/Android/NavigationLab/**"
+      - ".github/workflows/android-navigation-ci.yml"
+  pull_request:
+    branches: [ CYCLOPE_GEN3_AndroidNavigation ]
+    paths:
+      - "05-MobilApp/Android/NavigationLab/**"
+      - ".github/workflows/android-navigation-ci.yml"
+
+concurrency:
+  group: navlab-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Test / coverage / lint / docs / version
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 05-MobilApp/Android/NavigationLab/cyclope-navigation
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Ensure Android SDK packages
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          [ -x "$SDKMANAGER" ] || SDKMANAGER="$(command -v sdkmanager)"
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+          "$SDKMANAGER" --install "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Version anti-drift check (single source = gradle.properties)
+        run: ./gradlew --no-daemon verifyVersionSingleSource
+
+      - name: ktlint (style, report-only)
+        run: ./gradlew --no-daemon :navigation:ktlintCheck
+
+      - name: Unit tests + JaCoCo coverage gate
+        run: ./gradlew --no-daemon :navigation:testDebugUnitTest :navigation:jacocoTestReport :navigation:jacocoTestCoverageVerification
+
+      - name: Dokka HTML documentation
+        run: ./gradlew --no-daemon :navigation:dokkaHtml
+
+      - name: Upload JaCoCo report (XML + HTML)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: navigation-jacoco-report
+          path: 05-MobilApp/Android/NavigationLab/cyclope-navigation/navigation/build/reports/jacoco/
+          if-no-files-found: warn
+
+      - name: Upload unit test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: navigation-test-results
+          path: 05-MobilApp/Android/NavigationLab/cyclope-navigation/navigation/build/reports/tests/
+          if-no-files-found: warn
+
+      - name: Upload ktlint reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: navigation-ktlint-reports
+          path: 05-MobilApp/Android/NavigationLab/cyclope-navigation/navigation/build/reports/ktlint/
+          if-no-files-found: ignore
+
+      - name: Upload Dokka HTML docs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: navigation-dokka-html
+          path: 05-MobilApp/Android/NavigationLab/cyclope-navigation/navigation/build/dokka/
+          if-no-files-found: warn
