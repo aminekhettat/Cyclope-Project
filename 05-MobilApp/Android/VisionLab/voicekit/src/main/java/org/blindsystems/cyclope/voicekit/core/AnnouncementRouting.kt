@@ -1,4 +1,4 @@
-package org.blindsystems.cyclope.vision
+package org.blindsystems.cyclope.voicekit.core
 
 /** Accessibility services own their speech queue. Never run raw TTS on top of touch exploration. */
 enum class AnnouncementRoute { MUTED, TTS, ACCESSIBILITY }

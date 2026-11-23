@@ -22,6 +22,7 @@ android {
 }
 dependencies {
     implementation(project(":vision"))
+    implementation(project(":voicekit"))
     implementation(libs.activity)
     implementation(libs.camera.core)
     implementation(libs.camera.camera2)

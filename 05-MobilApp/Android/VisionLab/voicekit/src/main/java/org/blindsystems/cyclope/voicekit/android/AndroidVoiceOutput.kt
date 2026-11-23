@@ -1,22 +1,21 @@
-package org.blindsystems.cyclope.visionlab
+package org.blindsystems.cyclope.voicekit.android
 
 import android.content.Context
 import android.os.SystemClock
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.view.accessibility.AccessibilityManager
-import org.blindsystems.cyclope.vision.AnnouncementRoute
-import org.blindsystems.cyclope.vision.CocoLabels
-import org.blindsystems.cyclope.vision.Detection
-import org.blindsystems.cyclope.vision.SpeechPolicy
-import org.blindsystems.cyclope.vision.UpdateGate
-import org.blindsystems.cyclope.vision.announcementRoute
+import org.blindsystems.cyclope.voicekit.core.AnnouncementQueue
+import org.blindsystems.cyclope.voicekit.core.AnnouncementRoute
+import org.blindsystems.cyclope.voicekit.core.UpdateGate
+import org.blindsystems.cyclope.voicekit.core.VoiceAnnouncement
+import org.blindsystems.cyclope.voicekit.core.announcementRoute
 import java.util.Locale
 
 /** All policy and TTS calls happen on the main thread. A screen reader always has priority. */
-class AndroidSpeech(private val context: Context, private val announceAccessibility: (String) -> Unit, private val report: (String) -> Unit) {
+class AndroidVoiceOutput(private val context: Context, private val announceAccessibility: (String) -> Unit, private val report: (String) -> Unit, language: Locale = Locale.FRENCH) {
     private val accessibility = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
-    private val policy = SpeechPolicy()
+    private val policy = AnnouncementQueue()
     private val accessibilityUpdates = UpdateGate(10000)
     private var lastRoute = AnnouncementRoute.MUTED
     private val main = android.os.Handler(android.os.Looper.getMainLooper())
@@ -41,10 +40,10 @@ class AndroidSpeech(private val context: Context, private val announceAccessibil
                     val engine = tts
                     ready = status == TextToSpeech.SUCCESS && engine != null
                     if (ready) {
-                        val language = engine!!.setLanguage(Locale.FRENCH)
-                        ready = language != TextToSpeech.LANG_MISSING_DATA && language != TextToSpeech.LANG_NOT_SUPPORTED
+                        val languageStatus = engine!!.setLanguage(language)
+                        ready = languageStatus != TextToSpeech.LANG_MISSING_DATA && languageStatus != TextToSpeech.LANG_NOT_SUPPORTED
                     }
-                    report(if (ready) "Speech ready. TalkBack receives polite accessibility events instead of raw TTS." else "French speech unavailable. Install a French TTS voice; text detections remain available.")
+                    report(if (ready) "Speech ready. TalkBack receives polite accessibility events instead of raw TTS." else "Speech voice unavailable for ${language.displayName}. Install that voice; text announcements remain available.")
                 }
             }
         tts?.setOnUtteranceProgressListener(
@@ -76,7 +75,7 @@ class AndroidSpeech(private val context: Context, private val announceAccessibil
         )
     }
 
-    fun offer(detections: List<Detection>) {
+    fun offer(announcements: List<VoiceAnnouncement>) {
         val route = announcementRoute(muted, screenReader)
         if (route != lastRoute) {
             stop() // Also cancels raw TTS before switching to the accessibility service.
@@ -85,14 +84,14 @@ class AndroidSpeech(private val context: Context, private val announceAccessibil
         if (route == AnnouncementRoute.MUTED) return
         if (route == AnnouncementRoute.TTS && !ready) return
         val now = SystemClock.elapsedRealtime()
-        for (d in detections) policy.offer(d.classId, now, muted)
+        for (announcement in announcements) policy.offer(announcement, now, muted)
         if (route == AnnouncementRoute.ACCESSIBILITY) {
-            // This path works even when no French Android TTS voice is installed.
+            // This path works even when no requested Android TTS voice is installed.
             if (policy.peek() != null && accessibilityUpdates.mayPublish(now)) {
                 val messages = mutableListOf<String>()
                 while (policy.peek() != null) {
-                    val id = policy.poll()!!
-                    messages += "${CocoLabels.french[id]} détecté"
+                    val announcement = policy.poll()!!
+                    messages += announcement.text
                 }
                 announceAccessibility(messages.joinToString(". "))
             }
@@ -103,11 +102,11 @@ class AndroidSpeech(private val context: Context, private val announceAccessibil
 
     private fun next() {
         if (busy || !ready || muted || screenReader) return
-        val id = policy.poll() ?: return
+        val announcement = policy.poll() ?: return
         busy = true
         val utterance = "speech-${++sequence}"
         activeUtterance = utterance
-        if (tts?.speak("${CocoLabels.french[id]} détecté", TextToSpeech.QUEUE_ADD, null, utterance) == TextToSpeech.ERROR) {
+        if (tts?.speak(announcement.text, TextToSpeech.QUEUE_ADD, null, utterance) == TextToSpeech.ERROR) {
             activeUtterance = null
             busy = false
             policy.clear()

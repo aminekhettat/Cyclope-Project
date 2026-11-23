@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "CyclopeVisionLab"
-include(":app", ":vision")
+include(":app", ":vision", ":voicekit")

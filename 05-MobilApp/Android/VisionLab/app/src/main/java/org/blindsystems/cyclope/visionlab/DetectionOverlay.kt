@@ -8,6 +8,7 @@ import android.view.View
 import org.blindsystems.cyclope.vision.CocoLabels
 import org.blindsystems.cyclope.vision.Detection
 import org.blindsystems.cyclope.vision.mapToScreen
+import org.blindsystems.cyclope.voicekit.android.VoiceAccessibility
 
 /** Visual output has a text equivalent in MainActivity. It never captures accessibility focus. */
 class DetectionOverlay(context: Context) : View(context) {
@@ -28,7 +29,7 @@ class DetectionOverlay(context: Context) : View(context) {
     var sourceHeight: Int = 1
 
     init {
-        importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
+        VoiceAccessibility.excludeFromTraversal(this)
     }
 
     override fun onDraw(canvas: Canvas) {
