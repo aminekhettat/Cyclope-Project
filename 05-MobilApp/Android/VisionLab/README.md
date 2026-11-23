@@ -81,10 +81,17 @@ Phone back camera (CameraX)
   -> bounded speech queue (unless muted or TalkBack active)
 ```
 
-There are only two modules:
+There are three modules:
 
-- `vision` is a plain Kotlin/JVM library. It knows nothing about Android. Its tests run without a phone, network services, or an emulator.
-- `app` connects Android services to that library. This boundary makes the vision logic easier to learn and later integrate with navigation. Navigation business code is not copied here.
+- `vision` is a plain Kotlin/JVM library for detection, labels, parsing and geometry. It knows nothing about Android or voice services. Its tests run without a phone, network services, or an emulator.
+- `voicekit` is a real Android library shared by future vision/navigation hosts. It owns accessibility/TTS integration and a pure, generic queue/router/pacer. It accepts only `VoiceAnnouncement(key, text)`, never a detection or YOLO class. Read its [ten-line introduction](voicekit/README.md).
+- `app` connects CameraX and model inference to `vision`, and maps filtered detections to generic `voicekit` messages. Navigation business code is not copied here.
+
+Dependency direction: `app -> vision` and `app -> voicekit`. There is **no** `voicekit -> vision/app` dependency. CI enforces this with `:voicekit:verifySharedBoundary`, checking imports, Gradle project dependencies and the absence of microphone permission in the library manifest. NavigationLab may later include the unchanged module, provide the same Gradle catalog/plugin aliases (Android library, Kotlin Android, ktlint, Dokka, AndroidX core and JUnit), and send keys such as `route-step-42`; no change is made to Taoyu's branch in this task.
+
+In the future combined application, create **one AndroidVoiceOutput owner** for vision and navigation. Submit namespaced keys to that shared queue. Do not start two competing TTS engines just because two features use the module.
+
+STT is a **contract only**: `SpeechInput.startListening/stopListening`, text/error callbacks and `MicrophonePermissionHost` describe the future permission handoff. It is reserved for the shared navigation integration. No speech recognizer is instantiated, no microphone permission is declared or requested, and no audio dependency is added in V1.
 
 ### Suggested reading order
 
@@ -93,8 +100,8 @@ There are only two modules:
 | `vision/.../Detection.kt` | A Kotlin data class, normalized box coordinates, and a simple list filter. |
 | `vision/.../CocoLabels.kt` | A class ID is an index in a fixed label list. English text and French speech share the same IDs. |
 | `vision/.../DelegatePolicy.kt` | Enums, model filenames, and honest CPU fallback decisions. |
-| `vision/.../SpeechPolicy.kt` | A small state machine: cooldowns, a bounded queue, and why a clock matters. |
-| `vision/.../AnnouncementRouting.kt` | Routing to native TTS or the accessibility service, plus monotonic live-region pacing. |
+| `voicekit/.../core/AnnouncementQueue.kt` | A small state machine: cooldowns, a bounded queue, and why a clock matters. |
+| `voicekit/.../core/AnnouncementRouting.kt` | Routing to native TTS or the accessibility service, plus monotonic live-region pacing. |
 | `vision/.../Geometry.kt` | Letterbox padding, inverse mapping and preview FIT_CENTER coordinates. |
 | `vision/.../PixelCoordinates.kt` | Why tensor layouts and coordinate units must be explicit. |
 | `vision/.../YoloParser.kt` | Float arrays become detections; invalid values are rejected; legacy exports use class-aware NMS. |
@@ -102,11 +109,13 @@ There are only two modules:
 | `app/.../DeviceInfo.kt` | Reading Android capabilities without promising an NPU. |
 | `app/.../YoloEngine.kt` | Resize, tensor packing, one-thread delegate lifetime, measured inference and inverse letterbox. |
 | `app/.../DetectionOverlay.kt` | Drawing the filtered boxes and text with Canvas. |
-| `app/.../AndroidSpeech.kt` | Connecting the tested queue to Android TTS and yielding to TalkBack. |
+| `voicekit/.../android/AndroidVoiceOutput.kt` | Connecting generic announcements to Android TTS or TalkBack, without any vision import. |
+| `voicekit/.../android/VoiceAccessibility.kt` | Shared native labels, polite regions, explicit announcements and accessible dialog helpers. |
+| `voicekit/.../core/SpeechInput.kt` | The reserved STT contract. There is no recognizer or microphone use in V1. |
 | `app/.../MainActivity.kt` | Controls, permissions, settings, CameraX lifecycle and text equivalents. Read this last. |
 | `tools/export_models.py` | The offline preparation step that makes a phone-ready asset. |
 
-The `...` package paths are `org/blindsystems/cyclope/vision` and `org/blindsystems/cyclope/visionlab`. Comments explain the reason for important steps. Try changing one class selection and running its tests before changing the camera code.
+The `...` package paths are `org/blindsystems/cyclope/vision`, `org/blindsystems/cyclope/visionlab` and `org/blindsystems/cyclope/voicekit`. Comments explain the reason for important steps. Try changing one class selection and running its tests before changing the camera code.
 
 ## Testing with TalkBack
 
@@ -140,19 +149,20 @@ Official references consulted:
 ```sh
 ./gradlew --no-daemon verifyVersionSingleSource ktlintCheck
 ./gradlew --no-daemon :vision:test :vision:jacocoTestReport :vision:jacocoTestCoverageVerification
-./gradlew --no-daemon :vision:dokkaHtml
-./gradlew --no-daemon :app:lintDebug :app:assembleDebug
+./gradlew --no-daemon :voicekit:verifySharedBoundary :voicekit:testDebugUnitTest :voicekit:jacocoTestReport :voicekit:jacocoTestCoverageVerification
+./gradlew --no-daemon :vision:dokkaHtml :voicekit:dokkaHtml
+./gradlew --no-daemon :app:lintDebug :voicekit:lintDebug :app:assembleDebug
 ```
 
 Gradle 8.9, AGP 8.7.3 and JDK 17 follow NavigationLab conventions. Dependencies use `gradle/libs.versions.toml`. The library is intentionally JVM-only rather than Android-dependent: no resource compiler or framework is needed to test pure logic. `cyclopeVersionName` and `cyclopeVersionCode` in `gradle.properties` are the only version source. Use `./gradlew bumpVersion -Pbump=patch` to increment them. CI checks for drift.
 
 For local style fixes, run `./gradlew ktlintFormat` first. Then run the check in a separate command. Formatting and verification must not modify/read the same files concurrently.
 
-ktlint is **blocking**, not report-only. We use ktlint alone for this teaching-sized project: another configurable static analyzer would add noise before Shanna knows the code. JaCoCo produces actual coverage reports and enforces at least **80% instruction, line, branch and method coverage**, matching the NavigationLab convention. No production class is excluded from the gate. Dokka builds the library API documentation.
+ktlint is **blocking**, not report-only. We use ktlint alone for this teaching-sized project: another configurable static analyzer would add noise before Shanna knows the code. JaCoCo produces actual coverage reports and enforces at least **80% instruction, line, branch and method coverage**, matching the NavigationLab convention. The `vision` gate covers its whole JVM module. The `voicekit` gate covers **all pure core classes**; Android framework adapters/helpers are explicitly outside that JVM-only coverage gate and still require device/ATF validation. Their exclusion is not a claim of runtime verification. Dokka builds both libraries' API documentation.
 
 Tests cover class selection, malformed/end-to-end/legacy output parsing, NMS, letterbox/screen geometry, speech queue/cooldown/accessibility suppression and delegate policy. They are deterministic and offline after Gradle dependencies are cached. No instrumented camera/GPU tests are fabricated for CI.
 
-GitHub Actions workflow: `.github/workflows/android-visionlab-ci.yml`. It runs blocking style, Android Lint, JVM tests, JaCoCo with its four-metric 80% gate, Dokka, the version gate and **a real debug APK assembly on ubuntu-latest x86**. APK and reports are downloadable as artifacts. The Pi host cannot package an APK because Android's aapt2 binary is x86-64. Do not confuse that host limit with a failed CI build. Do not run `assembleDebug` repeatedly on ARM.
+GitHub Actions workflow: `.github/workflows/android-visionlab-ci.yml`. It runs blocking style, Android Lint, JVM tests for both libraries, their four-metric 80% pure-logic coverage gates, shared-module boundary checks, Dokka, the version gate and **a real debug APK assembly on ubuntu-latest x86**. APK and reports are downloadable as artifacts. The Pi host cannot package an APK because Android's aapt2 binary is x86-64. Do not confuse that host limit with a failed CI build. Do not run `assembleDebug` repeatedly on ARM.
 
 The Android app uses LiteRT's Interpreter-compatible 1.4.2 APIs. This deliberately keeps the CPU/GPU/NNAPI experiment readable. NNAPI is deprecated in Android 15; modern CompiledModel/NPU APIs are a future migration, not a promise that this teaching app controls a phone's NPU.
 
