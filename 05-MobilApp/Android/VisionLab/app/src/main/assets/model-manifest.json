@@ -64,5 +64,38 @@
     "export_commit": "abef139b3cae042fd8a6fa5afec809456d1593c4",
     "export_run": "https://github.com/aminekhettat/Cyclope-Project/actions/runs/45138993009",
     "license": "AGPL-3.0"
+  },
+  {
+    "file": "yolo26m_float16.tflite",
+    "bytes": 41468582,
+    "sha256": "01e06eea3828ebad877d7d4f7177e128691293031096696fe8bf6db4754f7b07",
+    "input": [
+      1,
+      640,
+      640,
+      3
+    ],
+    "output": [
+      1,
+      300,
+      6
+    ],
+    "ultralytics": "8.4.82",
+    "tensorflow": "2.19.0",
+    "source_url": "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26m.pt",
+    "source_sha256": "401cea9ab23ad19246ff7744859816bc599f350e93c9dd30367b6f0a0745d0b7",
+    "python": "3.11.18",
+    "export": {
+      "format": "tflite",
+      "quantize": 16,
+      "nms": false,
+      "end2end": true,
+      "imgsz": 640,
+      "batch": 1,
+      "device": "cpu"
+    },
+    "export_commit": "7561c6ec45055ff202a884b48000f0da9b0163f6",
+    "export_run": "https://github.com/aminekhettat/Cyclope-Project/actions/runs/45143598745",
+    "license": "AGPL-3.0"
   }
 ]
