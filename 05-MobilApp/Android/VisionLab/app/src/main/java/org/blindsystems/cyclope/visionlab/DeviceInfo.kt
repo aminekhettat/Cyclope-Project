@@ -19,6 +19,7 @@ object DeviceInfo {
             }
         val gl = (context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).deviceConfigurationInfo.glEsVersion
 
+        val nnapi = if (Build.VERSION.SDK_INT >= 27) "API available; hardware execution is driver-dependent." else "Unavailable before Android 8.1/API 27."
         fun mb(bytes: Long) = bytes / (1024 * 1024)
         return """
             Phone: ${Build.MANUFACTURER} ${Build.MODEL}
@@ -30,7 +31,7 @@ object DeviceInfo {
             RAM: ${mb(memory.totalMem)} MB total; ${mb(memory.availMem)} MB available now
             CPU: always available. More threads do not always mean faster inference.
             GPU: OpenGL ES $gl reported. Actual LiteRT GPU compatibility is checked when loading.
-            NNAPI: Android API is available; hardware acceleration is driver-dependent. NNAPI is deprecated on Android 15.
+            NNAPI: $nnapi NNAPI is deprecated on Android 15.
             NPU/DSP: not reliably enumerable through the public Java API. NNAPI does NOT prove an NPU is present or used.
             The live status shows the selected delegate and any CPU fallback, not per-operation hardware placement.
             """.trimIndent()
