@@ -12,43 +12,60 @@ A small Android learning app for Shanna. You can explore object detection withou
 4. Let Gradle sync. Install Android SDK platform 35 when asked.
 5. Connect an Android 8.0/API 26 or newer phone with USB debugging enabled. Choose that device, then **Run app**.
 6. Open **Device info** first. Read what Android reports, and what it cannot promise.
-7. Choose **small**, **CPU**, and the object classes you want. The initial classes are person, bicycle, car, traffic light, and stop sign.
+7. Read the automatic recommendation, choose **nano**, **small** or **medium**, and choose your delegate and object classes. **CPU** remains the baseline delegate. The initial classes are person, bicycle, car, traffic light, and stop sign.
 8. Press **Start camera**, then allow Camera permission. No microphone permission is needed for speech.
 9. Press **Stop camera** when finished. Leaving the activity also stops the camera and speech.
 
-**YOLO26 nano and small float16 models are bundled.** Small is the default; nano is also available immediately after installation, with no model download. Allow the camera permission and press Start camera to use detection. Medium remains an optional export exercise: selecting it explains its missing filename and keeps the camera preview available. No detector output is simulated. Real-phone accuracy, acceleration and TalkBack still need the device walkthrough below.
+**YOLO26 nano, small and medium float16 models are bundled.** The first launch preselects a recommendation based on reported phone capabilities, with a readable explanation. All three work without a model download. Allow the camera permission and press Start camera to use detection. No detector output is simulated. Real-phone accuracy, acceleration and TalkBack still need the device walkthrough below.
 
 ## What to try
 
-- **Model size:** small is the default. Medium may find more objects but needs more memory and compute. Nano lets you compare responsiveness. Selections persist on this phone.
+- **Model size:** the first-launch recommendation is a preselection, not a restriction. Medium may find more objects but needs more memory and compute. Nano lets you compare responsiveness. Selections persist on this phone.
 - **Delegate:** CPU is the baseline. GPU and NNAPI are optional experiments. A supported API is not proof of an accelerator. Initialization failure returns to CPU with a visible explanation. An inference-time failure stops detection once and asks you to select CPU or check the model; it does not keep retrying.
 - **Classes:** the accessible multi-choice dialog uses checkboxes. Apply saves the selection. Select none clears it. The exact same filtered list drives boxes and speech. Changing classes cancels queued speech.
 - **Speech:** French object names use Android TextToSpeech. Each class has a five-second minimum interval. There are at most three pending class announcements, plus the one currently speaking. Mute clears the queue. Install a French TTS voice if Android reports it missing.
 - **TalkBack:** touch exploration routes object announcements to Android accessibility events from a **POLITE live region**, instead of raw TextToSpeech. The service owns its speech queue. Object messages are batched (up to three) no more often than every ten seconds. FPS/latency has a separate POLITE region, updated at most every fifteen seconds while TalkBack is active. Without TalkBack, text measurements update about every 1.5 seconds. Read current detections requests the latest full summary immediately. Mute suppresses automatic object messages on both routes; measurements remain accessible.
 - **Measurements:** processed FPS counts analyzed frames over a one-second window; it is not preview FPS. Inference latency measures `Interpreter.run`. Pipeline latency includes resize, tensor conversion, inference and postprocessing, but excludes CameraX image conversion and screen drawing. Without touch exploration, text updates about every 1.5 seconds; TalkBack updates are deliberately paced as described above. No performance number is invented when models are absent.
 
-Do not choose the production model from a single FPS reading. Follow the [GEN 3 model qualification protocol](../../../03-Vision/GEN3-model-qualification-protocol.md). Compare precision, recall, battery, heat and latency on the same phone. Small is an educational starting point, not a completed qualification decision.
+Do not choose the production model from a single FPS reading. Follow the [GEN 3 model qualification protocol](../../../03-Vision/GEN3-model-qualification-protocol.md). Compare precision, recall, battery, heat and latency on the same phone. The capability-based recommendation is an educational starting point, not a completed qualification decision.
+
+## Automatic model recommendation
+
+`vision/.../ModelRecommendation.kt` contains the single deterministic policy and named constants. `DeviceInfo.collect` shares the same structured snapshot with Device info: total/available RAM, LiteRT GPU compatibility, NNAPI API availability, CPU cores, SoC and Android API level. The app uses LiteRT's existing `CompatibilityList`, not OpenGL version strings or guessed GPU/SoC age. A failed compatibility query is treated as unconfirmed GPU support.
+
+| Reported capabilities | Recommendation / option |
+| --- | --- |
+| Less than 6 GiB total RAM, or no confirmed LiteRT-compatible GPU | Nano preselected (including RAM below 4 GiB) |
+| At least 6 GiB total RAM **and** compatible LiteRT GPU | Small preselected |
+| At least 8 GiB total RAM, with or without GPU | Medium additionally labeled **Better-precision option**; the recommendation above is unchanged |
+
+Thresholds use binary GiB (1,073,741,824 bytes) reported by Android, not marketed storage/RAM labels. Available RAM is displayed but not scored because it fluctuates. CPU count, SoC name and API level are informational, not reliable performance rankings. **NNAPI API availability alone never establishes an accelerator** and does not upgrade the recommendation. A "recent GPU" heuristic was intentionally omitted because the public snapshot cannot determine that reliably. GPU compatibility is a candidate capability, not proof of fast hardware execution; live delegate/fallback status, FPS and latency remain available.
+
+**The user always decides.** All three native radio buttons remain enabled. The recommended entry says **Recommended for your phone** in text, not just color. The full explanation is readable by TalkBack and is updated through a POLITE live region. Medium below 4 GiB adds a nonblocking memory note. The existing delegate and FPS/latency controls are unchanged.
+
+An explicit radio-button choice (including tapping the already preselected option) is persisted under the existing SharedPreferences `size` key and always wins at startup. Previous installations' saved `size` choices are preserved. Saving unrelated settings does not convert an automatic preselection into a manual choice. **Reevaluate model recommendation** collects fresh capabilities and updates the recommendation/labels; it keeps any saved manual choice. Without a manual choice it may update the preselection. Neither startup nor reevaluation opens the camera. Real-phone/TalkBack validation is still required; this policy is not a phone benchmark.
 
 ## Model setup
 
 ### Bundled models and verified contract
 
-The APK includes the official pretrained **COCO 80-class YOLO26 nano and small** weights, exported to TFLite float16 on GitHub Actions **Ubuntu x86 / Python 3.11**, not on the ARM development Pi. The exact sizes, source-weight SHA-256, export recipe and output SHA-256 are recorded in `app/src/main/assets/model-manifest.json`.
+The APK includes the official pretrained **COCO 80-class YOLO26 nano, small and medium** weights, exported to TFLite float16 on GitHub Actions **Ubuntu x86 / Python 3.11**, not on the ARM development Pi. The exact sizes, source-weight SHA-256, export recipe and output SHA-256 are recorded in `app/src/main/assets/model-manifest.json`.
 
 | Bundled asset | Bytes | Size (decimal MB) |
 | --- | ---: | ---: |
 | `yolo26n_float16.tflite` | 5,448,366 | 5.45 |
 | `yolo26s_float16.tflite` | 19,629,058 | 19.63 |
+| `yolo26m_float16.tflite` | 41,468,582 | 41.47 |
 
-Export provenance: [manual run 45138993009](https://github.com/aminekhettat/Cyclope-Project/actions/runs/45138993009), commit `abef139`. The complete resolved toolchain is retained in `tools/export-environment-45138993009.txt`.
+Export provenance: [manual run 45138993009](https://github.com/aminekhettat/Cyclope-Project/actions/runs/45138993009), commit `abef139`. The nano/small toolchain is retained in `tools/export-environment-45138993009.txt`. Medium provenance: [manual run 45143598745](https://github.com/aminekhettat/Cyclope-Project/actions/runs/45143598745), commit `7561c6e`; resolved toolchain in `tools/export-environment-45143598745.txt`. Nano/small were retained byte-for-byte rather than replaced by nondeterministic reexports. The three weights total 66.55 MB; the debug APK is expected around 80 MB (see the delivery report for the measured artifact size).
 
-Both exports use **NHWC float32 `[1,640,640,3]` input in [0,1]**, float16 weights and **float32 `[1,300,6]` output**: normalized `x1,y1,x2,y2,score,classId`, end-to-end (no extra NMS). This is the existing `YoloEngine` / `YoloParser` contract; no model-name or parser workaround is needed. Normal CI verifies hashes, float16 tensors, the contract, built-in CPU operators and real inference on the checked-in official bus/person example. It also checks that the assembled APK contains byte-identical **uncompressed** assets, required by the memory-mapped loader. This is not a real-phone camera, speed or accuracy qualification.
+All three exports use **NHWC float32 `[1,640,640,3]` input in [0,1]**, float16 weights and **float32 `[1,300,6]` output**: normalized `x1,y1,x2,y2,score,classId`, end-to-end (no extra NMS). This is the existing `YoloEngine` / `YoloParser` contract; no model-name or parser workaround is needed. Normal CI verifies hashes, float16 tensors, the contract, built-in CPU operators and real inference on the checked-in official bus/person example. It also checks that the assembled APK contains byte-identical **uncompressed** assets, required by the memory-mapped loader. This is not a real-phone camera, speed or accuracy qualification.
 
-Medium is **not bundled**. Selecting it uses the existing missing-model explanation. Export it on Colab as Shanna's exercise and rebuild if needed. Never rename depth, segmentation, INT8 or custom-class weights to these filenames.
+Medium is bundled and fully selectable, including on low-memory phones (an informative note is not a block). Never rename depth, segmentation, INT8 or custom-class weights to these filenames.
 
 ### Regenerate manually on GitHub Actions
 
-The dedicated `.github/workflows/visionlab-export-models.yml` has **only `workflow_dispatch`**, never push/schedule triggers. The shared composite action pins the CPU toolchain, exports nano/small, smoke-tests them and publishes `visionlab-yolo26-float16`, including `model-manifest.json` and `export-environment.txt`. This does not commit or publish new weights automatically.
+The dedicated `.github/workflows/visionlab-export-models.yml` has **only `workflow_dispatch`**, never push/schedule triggers. The shared composite action pins the CPU toolchain, exports nano/small/medium, smoke-tests them and publishes `visionlab-yolo26-float16`, including `model-manifest.json` and `export-environment.txt`. This does not commit or publish new weights automatically.
 
 GitHub cannot dispatch a newly added workflow that is absent from the default branch. On this teaching branch, use the already registered VisionLab CI workflow's **manual export-only input** (same composite action):
 
@@ -59,7 +76,7 @@ gh run list --branch CYCLOPE_GEN3_AndroidVision --event workflow_dispatch
 gh run download RUN_ID --name visionlab-yolo26-float16 --dir /tmp/visionlab-export
 ```
 
-Copy the two `.tflite` files and `model-manifest.json` from the artifact's `exported-models/` directory to `app/src/main/assets/`, review checksums and provenance, and rebuild. Export-only runs deliberately skip APK/quality jobs; they are **not** APK acceptance evidence. Normal branch pushes retain all quality gates and the real APK build. If the standalone workflow is later registered on the default branch, it can be dispatched directly by filename; changing that branch is outside this delivery.
+Copy the three `.tflite` files and `model-manifest.json` from the artifact's `exported-models/` directory to `app/src/main/assets/`, review checksums and provenance, and rebuild. Export-only runs deliberately skip APK/quality jobs; they are **not** APK acceptance evidence. Normal branch pushes retain all quality gates and the real APK build. If the standalone workflow is later registered on the default branch, it can be dispatched directly by filename; changing that branch is outside this delivery.
 
 ### Reproduce on Colab or Linux x86
 
@@ -70,19 +87,17 @@ python3.11 -m venv .venv
 . .venv/bin/activate
 python -m pip install torch==2.8.0 torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cpu
 python -m pip install 'ultralytics==8.4.82' 'tensorflow==2.19.0' 'tf-keras==2.19.0' 'onnx2tf==1.28.8' 'onnx==1.17.0' 'onnxruntime==1.23.2' 'onnxslim==0.1.82' 'sng4onnx==1.0.4' 'onnx-graphsurgeon==0.5.8' 'ai-edge-litert==1.4.0' 'protobuf>=5,<6'
-python tools/export_models.py --sizes n s --destination app/src/main/assets
+python tools/export_models.py --sizes n s m --destination app/src/main/assets
 python tools/verify_models.py --smoke-image tools/testdata/bus.jpg
-# Optional medium exercise (not part of the bundled pair):
-python tools/export_models.py --sizes m --destination /tmp/visionlab-medium
 ```
 
-The helper uses `format="tflite", quantize=16, end2end=True, nms=False, imgsz=640, batch=1, device="cpu"`. `quantize=16` is the float16-weight option in this version; image/output tensors remain float32. Official source URLs are `https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26n.pt` and `yolo26s.pt`. The helper checks the COCO labels and runs a finite-output smoke inference before copying. Keep medium's separate manifest for provenance; do not replace the bundled pair's manifest with a medium-only one. Models at or above **50,000,000 bytes** must stay team artifacts, not Git blobs.
+The helper uses `format="tflite", quantize=16, end2end=True, nms=False, imgsz=640, batch=1, device="cpu"`. `quantize=16` is the float16-weight option in this version; image/output tensors remain float32. Official source URLs are `https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26n.pt` , `yolo26s.pt` and `yolo26m.pt`. The helper checks the COCO labels and runs a finite-output smoke inference before copying. The manifest must contain all three models; merge provenance by filename if retaining previously exported nano/small assets. Models at or above **50,000,000 bytes** must stay team artifacts, not Git blobs.
 
-Expected assets are `yolo26n_float16.tflite`, `yolo26s_float16.tflite` and optionally `yolo26m_float16.tflite`. The app never downloads weights. See the [GEN3 Colab training guide](../../../03-Vision/GEN3-colab-training-guide.md#7-export-for-the-phone-protocol-phase-2) for training context. Before upgrading to the [current LiteRT exporter](https://docs.ultralytics.com/integrations/litert/), revalidate operators, runtime and tensors: newer NCHW exports use pixel coordinates, unlike these normalized NHWC exports.
+Expected assets are `yolo26n_float16.tflite`, `yolo26s_float16.tflite` and `yolo26m_float16.tflite`. The app never downloads weights. See the [GEN3 Colab training guide](../../../03-Vision/GEN3-colab-training-guide.md#7-export-for-the-phone-protocol-phase-2) for training context. Before upgrading to the [current LiteRT exporter](https://docs.ultralytics.com/integrations/litert/), revalidate operators, runtime and tensors: newer NCHW exports use pixel coordinates, unlike these normalized NHWC exports.
 
 ### License
 
-Ultralytics code and YOLO weights are offered under AGPL-3.0 or an Enterprise license. AGPL can be used for this student project, with its obligations respected. Keep license notices and review distribution/source requirements when distributing the app. Future proprietary use needs a separate license decision. See [Ultralytics licensing](https://www.ultralytics.com/license). The bundled nano/small weights are AGPL-3.0 licensed; their upstream license is retained alongside them in the assets folder.
+Ultralytics code and YOLO weights are offered under AGPL-3.0 or an Enterprise license. AGPL can be used for this student project, with its obligations respected. Keep license notices and review distribution/source requirements when distributing the app. Future proprietary use needs a separate license decision. See [Ultralytics licensing](https://www.ultralytics.com/license). The bundled nano/small/medium weights are AGPL-3.0 licensed; their upstream license is retained alongside them in the assets folder.
 
 ## Architecture: follow one frame
 
@@ -115,6 +130,7 @@ STT is a **contract only**: `SpeechInput.startListening/stopListening`, text/err
 | --- | --- |
 | `vision/.../Detection.kt` | A Kotlin data class, normalized box coordinates, and a simple list filter. |
 | `vision/.../CocoLabels.kt` | A class ID is an index in a fixed label list. English text and French speech share the same IDs. |
+| `vision/.../ModelRecommendation.kt` | Pure capability-based recommendation, user-choice precedence and selector labels. |
 | `vision/.../DelegatePolicy.kt` | Enums, model filenames, and honest CPU fallback decisions. |
 | `voicekit/.../core/AnnouncementQueue.kt` | A small state machine: cooldowns, a bounded queue, and why a clock matters. |
 | `voicekit/.../core/AnnouncementRouting.kt` | Routing to native TTS or the accessibility service, plus monotonic live-region pacing. |
@@ -138,17 +154,17 @@ The `...` package paths are `org/blindsystems/cyclope/vision`, `org/blindsystems
 This checklist requires a real phone. It is not claimed as completed by CI.
 
 1. Enable TalkBack in Android **Settings > Accessibility**.
-2. Navigate from the title through **Device info -> Choose object classes -> Start camera -> Model size -> Inference delegate -> Mute speech**, then status, measurements, detections and Read current detections. This is the view order, not an artificial focus jump. The preview/overlay do not capture focus.
+2. Navigate from the title through **Device info -> Choose object classes -> Start camera -> Model size -> recommendation -> model radio buttons -> Reevaluate model recommendation -> Inference delegate -> Mute speech**, then status, measurements, detections and Read current detections. This is the view order, not an artificial focus jump. The preview/overlay do not capture focus.
 3. Open Device info. Read its text, then activate Close.
 4. Open Choose object classes. Check and uncheck items. Verify their announced checked state. Apply. Try Select none.
 5. Start the camera. Deny permission once. Check that the explanation is readable and other controls still work. Allow permission in Settings, then retry.
-6. Select small and nano in turn: each bundled model should detect without an additional download. Verify that only selected classes appear in the detection summary. Select medium to verify the missing filename and setup explanation.
+6. Select nano, small and medium in turn: each bundled model should detect without an additional download. Verify that only selected classes appear in the detection summary. Read the recommendation and the textually marked recommended radio button. Choose medium even when nano is recommended; no blocking dialog should appear. Restart and confirm your choice is retained. Reevaluate and confirm the explanation updates without replacing your saved choice.
 7. With TalkBack active, verify that **raw app TTS is silent**, but object messages reach TalkBack through the polite detection region. Updates must not occur on every camera frame: object batches are at least ten seconds apart, metrics at least fifteen seconds apart. Use Read current detections for an immediate, user-requested announcement. Disable TalkBack and verify normal French TTS, per-class cooldowns and mute. Enable TalkBack while TTS is already speaking: raw speech must stop before accessibility routing starts. Test accessibility routing even if no French TTS voice is installed.
 8. Change model/delegate while running. Confirm the status or explicit failure/fallback. Press Stop, background the app, and rotate the phone. Verify there is no continuing camera or speech.
 9. Increase system font size and display size. All controls must remain reachable by scrolling. Interactive controls have at least 48 dp height. Boxes have labels and percentages, not color-only meaning. Text summaries do not require seeing the preview.
 10. On the target device, check portrait/landscape box alignment, tall/wide preview letterboxing, thermal behavior and memory. Real camera/delegate execution is not covered by JVM tests.
 
-Automatic TalkBack detection uses Android's accessibility + touch-exploration signals, not service names. Other screen readers that do not enable touch exploration should use Mute speech. Standard Button, Spinner and CheckedTextView widgets keep their platform AccessibilityNodeInfo roles and checked states. Explicit descriptions name interactive controls and dialog rows; text is not hidden by replacing the native node tree. Static information remains readable. Decorative preview/overlay views use importantForAccessibility=NO/NO_HIDE_DESCENDANTS.
+Automatic TalkBack detection uses Android's accessibility + touch-exploration signals, not service names. Other screen readers that do not enable touch exploration should use Mute speech. Standard Button, RadioButton, Spinner and CheckedTextView widgets keep their platform AccessibilityNodeInfo roles and checked states. Explicit descriptions name interactive controls and dialog rows; text is not hidden by replacing the native node tree. Static information remains readable. Decorative preview/overlay views use importantForAccessibility=NO/NO_HIDE_DESCENDANTS.
 
 The detection callback changes the POLITE region's text. Android emits the content-change AccessibilityEvent; we do **not** also call announceForAccessibility for that same update. The manual Read current detections button uses announceForAccessibility only for its explicit request. This avoids duplicate announcements. Android API 36 deprecates generic announceForAccessibility in favor of semantic/live-region updates; the automatic path already follows that guidance.
 
