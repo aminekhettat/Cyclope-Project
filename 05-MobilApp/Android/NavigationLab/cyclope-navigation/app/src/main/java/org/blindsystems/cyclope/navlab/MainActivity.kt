@@ -9,11 +9,14 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.WindowManager
+import android.view.accessibility.AccessibilityNodeInfo
+import android.widget.ScrollView
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.FileProvider
+import org.blindsystems.cyclope.voicekit.android.VoiceAccessibility
 import org.blindsystems.cyclope.navigation.core.AddressSelector
 import org.blindsystems.cyclope.navigation.core.ButtonEvent
 import org.blindsystems.cyclope.navigation.core.GeoPoint
@@ -63,6 +66,8 @@ class MainActivity : Activity() {
     private lateinit var tvNav: TextView
     private lateinit var etAddress: EditText
     private lateinit var btnLog: Button
+    private lateinit var tvStatus: TextView
+    private lateinit var tvAnnouncements: TextView
 
     private var selector: AddressSelector? = null
     private var destination: Place? = null
@@ -73,6 +78,7 @@ class MainActivity : Activity() {
     private var simIndex = 0
     private var markCount = 0
     private val navLog = ArrayDeque<String>()
+    private var latestGuidance = "No guidance announcement yet."
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,13 +86,37 @@ class MainActivity : Activity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) // logging needs the app in foreground
 
         recorder = PositionRecorder(this)
-        voice = AndroidVoiceOutput(this) { line -> appendNav(line) }
         recorder.addListener { sample -> onSample(sample) }
 
         tvSources = findViewById(R.id.tvSources)
         tvNav = findViewById(R.id.tvNav)
         etAddress = findViewById(R.id.etAddress)
         btnLog = findViewById(R.id.btnLog)
+        tvStatus = findViewById(R.id.tvStatus)
+        tvAnnouncements = findViewById(R.id.tvAnnouncements)
+        voice = AndroidVoiceOutput(
+            this,
+            announceAccessibility = { VoiceAccessibility.publishPolite(tvAnnouncements, it) },
+            onSpoken = { appendNav(it) },
+            onStatus = { VoiceAccessibility.publishPolite(tvStatus, it) },
+        )
+        VoiceAccessibility.heading(findViewById(R.id.headingPositioning))
+        VoiceAccessibility.heading(findViewById(R.id.headingNavigation))
+        findViewById<Button>(R.id.btnSkipNavigation).setOnClickListener {
+            etAddress.requestFocus()
+            etAddress.performAccessibilityAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS, null)
+            findViewById<ScrollView>(R.id.mainScroll).smoothScrollTo(0, findViewById<android.view.View>(R.id.headingNavigation).top)
+        }
+        findViewById<Button>(R.id.btnMute).setOnClickListener {
+            voice.muted = !voice.muted
+            val button = it as Button
+            button.setText(if (voice.muted) R.string.unmute_voice else R.string.mute_voice)
+            VoiceAccessibility.label(button, button.text)
+            VoiceAccessibility.announceRequested(button, button.text)
+        }
+        findViewById<Button>(R.id.btnReadGuidance).setOnClickListener {
+            VoiceAccessibility.announceRequested(tvAnnouncements, latestGuidance)
+        }
 
         btnLog.setOnClickListener { toggleLogging() }
         findViewById<Button>(R.id.btnMark).setOnClickListener {
@@ -112,6 +142,7 @@ class MainActivity : Activity() {
     override fun onStop() {
         super.onStop()
         main.removeCallbacks(uiTick)
+        voice.stop() // Do not keep guidance speech running over another app.
         if (!recorder.isLogging) recorder.stop()
     }
 
@@ -145,6 +176,7 @@ class MainActivity : Activity() {
         if (recorder.isLogging) {
             recorder.stopCsv()
             btnLog.setText(R.string.start_logging)
+            VoiceAccessibility.label(btnLog, getString(R.string.start_logging_description))
             toast("Saved ${recorder.csvFile?.name}")
             return
         }
@@ -159,6 +191,7 @@ class MainActivity : Activity() {
         recorder.startCsv(File(dir, "poslog_${stamp}_$model.csv"))
         markCount = 0
         btnLog.setText(R.string.stop_logging)
+        VoiceAccessibility.label(btnLog, getString(R.string.stop_logging_description))
     }
 
     private fun shareCsv() {
@@ -383,9 +416,12 @@ class MainActivity : Activity() {
     // ------------------------------------------------------------------ helpers
 
     private fun appendNav(line: String) {
+        if (line.startsWith("[")) latestGuidance = line.substringAfter("] ")
         navLog.addLast(line)
         while (navLog.size > 60) navLog.removeFirst()
         tvNav.text = navLog.joinToString("\n")
+        // The full log remains manually readable, not a 60-line live-region announcement.
+        if (line.startsWith(">") || line.startsWith("!")) VoiceAccessibility.publishPolite(tvStatus, line)
     }
 
     private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()

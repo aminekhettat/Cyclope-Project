@@ -1,138 +1,249 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
+    android:layout_height="match_parent"
+    android:id="@+id/mainScroll"
+    android:background="@color/nav_background"
+    android:fillViewport="true">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="12dp">
-
-        <!-- 1. Positioning study -->
+        <Button
+            android:id="@+id/btnSkipNavigation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/skip_navigation"
+            android:contentDescription="@string/skip_navigation_description"
+            android:minHeight="48dp"
+            android:minWidth="48dp"
+            android:importantForAccessibility="yes"
+            android:textColor="@color/nav_foreground"
+            android:backgroundTint="@color/nav_button_surface" />
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/title_positioning"
             android:textSize="18sp"
-            android:textStyle="bold" />
-
+            android:textStyle="bold"
+            android:id="@+id/headingPositioning"
+            android:textColor="@color/nav_foreground" />
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
-
             <Button
                 android:id="@+id/btnLog"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/start_logging" />
-
+                android:text="@string/start_logging"
+                android:minHeight="48dp"
+                android:minWidth="48dp"
+                android:importantForAccessibility="yes"
+                android:contentDescription="@string/start_logging_description"
+                android:textColor="@color/nav_foreground"
+                android:backgroundTint="@color/nav_button_surface" />
             <Button
                 android:id="@+id/btnMark"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/mark" />
-
+                android:text="@string/mark"
+                android:minHeight="48dp"
+                android:minWidth="48dp"
+                android:importantForAccessibility="yes"
+                android:contentDescription="@string/mark_description"
+                android:textColor="@color/nav_foreground"
+                android:backgroundTint="@color/nav_button_surface" />
             <Button
                 android:id="@+id/btnShare"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/share_csv" />
+                android:text="@string/share_csv"
+                android:minHeight="48dp"
+                android:minWidth="48dp"
+                android:importantForAccessibility="yes"
+                android:contentDescription="@string/share_description"
+                android:textColor="@color/nav_foreground"
+                android:backgroundTint="@color/nav_button_surface" />
         </LinearLayout>
-
         <TextView
             android:id="@+id/tvSources"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="monospace"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:paddingTop="6dp"
-            android:paddingBottom="12dp" />
-
-        <!-- 2. Navigation demo -->
+            android:paddingBottom="12dp"
+            android:textColor="@color/nav_foreground"
+            android:accessibilityLiveRegion="none"
+            android:focusable="true" />
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/title_navigation"
             android:textSize="18sp"
-            android:textStyle="bold" />
-
+            android:textStyle="bold"
+            android:id="@+id/headingNavigation"
+            android:textColor="@color/nav_foreground" />
         <EditText
             android:id="@+id/etAddress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/address_hint"
             android:inputType="textPostalAddress"
-            android:importantForAutofill="no" />
-
+            android:importantForAutofill="no"
+            android:minHeight="48dp"
+            android:minWidth="48dp"
+            android:importantForAccessibility="yes"
+            android:contentDescription="@string/address_description"
+            android:textColor="@color/nav_foreground"
+            android:textColorHint="@color/nav_hint" />
         <Button
             android:id="@+id/btnSearch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/search" />
-
+            android:text="@string/search"
+            android:minHeight="48dp"
+            android:minWidth="48dp"
+            android:importantForAccessibility="yes"
+            android:contentDescription="@string/search_description"
+            android:textColor="@color/nav_foreground"
+            android:backgroundTint="@color/nav_button_surface" />
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/status_ready"
+            android:textColor="@color/nav_foreground"
+            android:accessibilityLiveRegion="polite"
+            android:focusable="true"
+            android:padding="8dp" />
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/glasses_buttons" />
-
+            android:text="@string/glasses_buttons"
+            android:textColor="@color/nav_foreground" />
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
-
             <Button
                 android:id="@+id/btnShort"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/short_press" />
-
+                android:text="@string/short_press"
+                android:minHeight="48dp"
+                android:minWidth="48dp"
+                android:importantForAccessibility="yes"
+                android:contentDescription="@string/short_description"
+                android:textColor="@color/nav_foreground"
+                android:backgroundTint="@color/nav_button_surface" />
             <Button
                 android:id="@+id/btnLong"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/long_press" />
-
+                android:text="@string/long_press"
+                android:minHeight="48dp"
+                android:minWidth="48dp"
+                android:importantForAccessibility="yes"
+                android:contentDescription="@string/long_description"
+                android:textColor="@color/nav_foreground"
+                android:backgroundTint="@color/nav_button_surface" />
             <Button
                 android:id="@+id/btnDouble"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/double_press" />
+                android:text="@string/double_press"
+                android:minHeight="48dp"
+                android:minWidth="48dp"
+                android:importantForAccessibility="yes"
+                android:contentDescription="@string/double_description"
+                android:textColor="@color/nav_foreground"
+                android:backgroundTint="@color/nav_button_surface" />
         </LinearLayout>
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
-
             <Button
                 android:id="@+id/btnSimulate"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/simulate" />
-
+                android:text="@string/simulate"
+                android:minHeight="48dp"
+                android:minWidth="48dp"
+                android:importantForAccessibility="yes"
+                android:contentDescription="@string/simulate_description"
+                android:textColor="@color/nav_foreground"
+                android:backgroundTint="@color/nav_button_surface" />
             <Button
                 android:id="@+id/btnStopNav"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/stop_nav" />
+                android:text="@string/stop_nav"
+                android:minHeight="48dp"
+                android:minWidth="48dp"
+                android:importantForAccessibility="yes"
+                android:contentDescription="@string/stop_description"
+                android:textColor="@color/nav_foreground"
+                android:backgroundTint="@color/nav_button_surface" />
         </LinearLayout>
-
+        <Button
+            android:id="@+id/btnMute"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/mute_voice"
+            android:contentDescription="@string/mute_voice"
+            android:minHeight="48dp"
+            android:minWidth="48dp"
+            android:importantForAccessibility="yes"
+            android:textColor="@color/nav_foreground"
+            android:backgroundTint="@color/nav_button_surface" />
+        <Button
+            android:id="@+id/btnReadGuidance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/read_guidance"
+            android:contentDescription="@string/read_guidance_description"
+            android:minHeight="48dp"
+            android:minWidth="48dp"
+            android:importantForAccessibility="yes"
+            android:textColor="@color/nav_foreground"
+            android:backgroundTint="@color/nav_button_surface" />
+        <TextView
+            android:id="@+id/tvAnnouncements"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/no_guidance"
+            android:textColor="@color/nav_foreground"
+            android:accessibilityLiveRegion="polite"
+            android:focusable="true"
+            android:padding="8dp" />
+        <TextView
+            android:id="@+id/headingLog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/navigation_log"
+            android:textColor="@color/nav_foreground" />
         <TextView
             android:id="@+id/tvNav"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="monospace"
-            android:textSize="12sp"
-            android:paddingTop="6dp" />
+            android:textSize="14sp"
+            android:paddingTop="6dp"
+            android:textColor="@color/nav_foreground"
+            android:accessibilityLiveRegion="none"
+            android:focusable="true" />
     </LinearLayout>
 </ScrollView>

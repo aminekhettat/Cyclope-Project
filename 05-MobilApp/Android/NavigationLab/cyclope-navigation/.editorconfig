@@ -1,0 +1,10 @@
+root = true
+[voicekit/**/*.{kt,kts}]
+indent_size = 4
+max_line_length = off
+ktlint_standard_no-wildcard-imports = disabled
+ktlint_standard_function-naming = disabled
+[app/**/*.{kt,kts}]
+indent_size = 4
+max_line_length = off
+ktlint_standard_function-naming = disabled

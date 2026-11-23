@@ -15,4 +15,24 @@
     <string name="double_press">Double</string>
     <string name="simulate">Simulate walk</string>
     <string name="stop_nav">Stop</string>
+    <string name="skip_navigation">Skip positioning study: go to navigation</string>
+    <string name="skip_navigation_description">Skip positioning controls and move focus to the navigation address field</string>
+    <string name="start_logging_description">Start recording all positioning sources to a CSV log</string>
+    <string name="stop_logging_description">Stop and save the positioning CSV log</string>
+    <string name="mark_description">Save a numbered marker in the positioning log</string>
+    <string name="share_description">Share the current positioning CSV file</string>
+    <string name="address_description">Destination address. Type an address; speech recognition is not implemented</string>
+    <string name="search_description">Search destination addresses using Nominatim. Requires internet</string>
+    <string name="short_description">Short glasses press: read the next address candidate</string>
+    <string name="long_description">Long glasses press: choose the current address, or focus address input</string>
+    <string name="double_description">Double glasses press: reject all proposed addresses</string>
+    <string name="simulate_description">Simulate walking along the computed route without moving</string>
+    <string name="stop_description">Stop navigation, simulation and custom voice announcements</string>
+    <string name="mute_voice">Mute custom guidance voice</string>
+    <string name="unmute_voice">Unmute custom guidance voice</string>
+    <string name="read_guidance">Read latest guidance with accessibility</string>
+    <string name="read_guidance_description">Ask the screen reader to repeat the latest guidance announcement</string>
+    <string name="status_ready">Ready. Enter a destination or start a positioning log.</string>
+    <string name="no_guidance">No guidance announcement yet.</string>
+    <string name="navigation_log">Navigation history (read manually; not announced automatically)</string>
 </resources>

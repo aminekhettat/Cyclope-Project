@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jlleitschuh.gradle.ktlint")
 }
 
 android {
@@ -39,5 +40,14 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
 
     implementation(project(":navigation"))
+    implementation(project(":voicekit"))
+    testImplementation("junit:junit:4.13.2")
     implementation("androidx.core:core-ktx:1.13.1") // FileProvider for "Share CSV"
+}
+
+// Do not rewrite Taoyu's existing activity or smoke tests for style in this integration.
+ktlint {
+    filter {
+        exclude("**/MainActivity.kt", "**/SmokeInstrumentedTest.kt")
+    }
 }

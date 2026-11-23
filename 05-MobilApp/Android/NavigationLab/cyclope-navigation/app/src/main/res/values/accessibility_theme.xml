@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fixed light surfaces avoid relying on the device's accent color for readable contrast. -->
+    <color name="nav_background">#FFFFFF</color>
+    <color name="nav_foreground">#111111</color>
+    <color name="nav_hint">#444444</color>
+    <color name="nav_button_surface">#E8EEF3</color>
+    <color name="nav_accent">#005A9C</color>
+    <style name="NavLabTheme" parent="android:style/Theme.Material.Light.DarkActionBar">
+        <item name="android:colorAccent">@color/nav_accent</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>
