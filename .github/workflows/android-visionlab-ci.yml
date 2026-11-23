@@ -12,6 +12,11 @@ on:
       - '05-MobilApp/Android/VisionLab/**'
       - '.github/workflows/android-visionlab-ci.yml'
   workflow_dispatch:
+    inputs:
+      export_models:
+        description: 'Manual x86 export only (branch-only workflow bootstrap)'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -20,7 +25,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  export-models:
+    if: github.event_name == 'workflow_dispatch' && inputs.export_models
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      OMP_NUM_THREADS: '2'
+      TF_NUM_INTRAOP_THREADS: '2'
+      TF_NUM_INTEROP_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./05-MobilApp/Android/VisionLab/tools/export-action
   quality-and-apk:
+    if: github.event_name != 'workflow_dispatch' || !inputs.export_models
     runs-on: ubuntu-latest
     timeout-minutes: 25
     defaults:

@@ -19,24 +19,4 @@ jobs:
       TF_NUM_INTEROP_THREADS: '2'
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Install pinned CPU export toolchain
-        run: |
-          python -m pip install torch==2.8.0 torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cpu
-          python -m pip install 'ultralytics==8.4.82' 'tensorflow==2.19.0' 'tf-keras==2.19.0' 'onnx2tf==1.28.8' 'onnx==1.17.0' 'onnxruntime==1.23.2' 'onnxslim==0.1.82' 'sng4onnx==1.0.4' 'onnx-graphsurgeon==0.5.8' 'ai-edge-litert==1.4.0' 'protobuf>=5,<6'
-      - name: Export and smoke-test official nano and small models
-        run: python tools/export_models.py --sizes n s --destination exported-models
-      - name: Record complete environment
-        if: always()
-        run: python -m pip freeze > export-environment.txt
-      - name: Publish models and provenance
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: visionlab-yolo26-float16
-          path: |
-            05-MobilApp/Android/VisionLab/exported-models/
-            05-MobilApp/Android/VisionLab/export-environment.txt
-          if-no-files-found: error
+      - uses: ./05-MobilApp/Android/VisionLab/tools/export-action
