@@ -18,4 +18,4 @@ rootProject.name = "CyclopeNavigation"
 
 // :navigation = the navigation brick (to be integrated in the final app)
 // :app        = small test harness used to measure positioning and demo the guidance
-include(":app", ":navigation")
+include(":app", ":navigation", ":voicekit")

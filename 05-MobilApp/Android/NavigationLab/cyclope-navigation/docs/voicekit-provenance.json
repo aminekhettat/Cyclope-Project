@@ -1,0 +1,54 @@
+{
+  "source_commit": "a517cd1f939b147612f1b4d7460e39f63756866d",
+  "source_prefix": "05-MobilApp/Android/VisionLab/voicekit/",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "133d8528ff73f2d3ff5b533cc4160c8605835a0cac2f50fa5dfedf57a339d632"
+    },
+    {
+      "path": "build.gradle.kts",
+      "sha256": "cd4a3f0ad3dfd6e0e0ee54fe8600ba21b80ef66dac938ef5ced1d04629f27e4a"
+    },
+    {
+      "path": "src/main/AndroidManifest.xml",
+      "sha256": "7ae731979736e20984d6d263cb8a1537eb7693c31fa9af6550be74418cbb3fe3"
+    },
+    {
+      "path": "src/main/java/org/blindsystems/cyclope/voicekit/android/AndroidVoiceOutput.kt",
+      "sha256": "b0c9b1ee71b2f115674b3eb88271dccfaa0d1c755ac17429822cdac5fbee7890"
+    },
+    {
+      "path": "src/main/java/org/blindsystems/cyclope/voicekit/android/VoiceAccessibility.kt",
+      "sha256": "e1032d66235dfc9367331805c6635e744e8c320f23dd2dbc077093ca8fa40b08"
+    },
+    {
+      "path": "src/main/java/org/blindsystems/cyclope/voicekit/core/AnnouncementQueue.kt",
+      "sha256": "26a8321bfd06b9919eb3ac48ee42a417de699a6f192a39b60e82570147307ae1"
+    },
+    {
+      "path": "src/main/java/org/blindsystems/cyclope/voicekit/core/AnnouncementRouting.kt",
+      "sha256": "87983fe2cd23c2de5b9e0df61e36094d2091a506591f204ff62da9f857af4d6b"
+    },
+    {
+      "path": "src/main/java/org/blindsystems/cyclope/voicekit/core/SpeechInput.kt",
+      "sha256": "97b316898cb60c1d48ae71c48caabef36154e57616e503adad841915afb00488"
+    },
+    {
+      "path": "src/main/java/org/blindsystems/cyclope/voicekit/core/VoiceAnnouncement.kt",
+      "sha256": "2261792f4fe09fba595c9425d8ace32d05d7c1744166eab79808d7566950636a"
+    },
+    {
+      "path": "src/test/java/org/blindsystems/cyclope/voicekit/core/AnnouncementQueueTest.kt",
+      "sha256": "35e2355f167d951cf8106c370aa42d56dfdc56e3cdc2b52ffa16c0ff90777903"
+    },
+    {
+      "path": "src/test/java/org/blindsystems/cyclope/voicekit/core/AnnouncementRoutingTest.kt",
+      "sha256": "43aaae213f7f3db52b920e0dca8f6b90f084ce54c4b12684bdf5c32778a78a4d"
+    },
+    {
+      "path": "src/test/java/org/blindsystems/cyclope/voicekit/core/SharedContractTest.kt",
+      "sha256": "14d2d377afe49f8397e345ca345673dbc48610a3a220b8ecec25ad523962888b"
+    }
+  ]
+}
