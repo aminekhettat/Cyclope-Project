@@ -40,14 +40,16 @@ jobs:
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-35' 'build-tools;35.0.0'
       - name: Version anti-drift
         run: ./gradlew --no-daemon verifyVersionSingleSource
+      - name: Shared voicekit architecture boundary
+        run: ./gradlew --no-daemon :voicekit:verifySharedBoundary
       - name: Blocking ktlint
         run: ./gradlew --no-daemon ktlintCheck
       - name: Offline JVM tests and JaCoCo
-        run: ./gradlew --no-daemon :vision:test :vision:jacocoTestReport :vision:jacocoTestCoverageVerification
+        run: ./gradlew --no-daemon :vision:test :vision:jacocoTestReport :vision:jacocoTestCoverageVerification :voicekit:testDebugUnitTest :voicekit:jacocoTestReport :voicekit:jacocoTestCoverageVerification
       - name: Android lint including static accessibility checks
-        run: ./gradlew --no-daemon :app:lintDebug
+        run: ./gradlew --no-daemon :app:lintDebug :voicekit:lintDebug
       - name: Dokka API documentation
-        run: ./gradlew --no-daemon :vision:dokkaHtml
+        run: ./gradlew --no-daemon :vision:dokkaHtml :voicekit:dokkaHtml
       - name: Assemble real debug APK
         run: ./gradlew --no-daemon :app:assembleDebug
       - name: Publish debug APK
@@ -65,6 +67,9 @@ jobs:
             05-MobilApp/Android/VisionLab/vision/build/reports/
             05-MobilApp/Android/VisionLab/vision/build/test-results/
             05-MobilApp/Android/VisionLab/vision/build/dokka/
+            05-MobilApp/Android/VisionLab/voicekit/build/reports/
+            05-MobilApp/Android/VisionLab/voicekit/build/test-results/
+            05-MobilApp/Android/VisionLab/voicekit/build/dokka/
             05-MobilApp/Android/VisionLab/app/build/reports/
             05-MobilApp/Android/VisionLab/build/reports/ktlint/
           if-no-files-found: warn
