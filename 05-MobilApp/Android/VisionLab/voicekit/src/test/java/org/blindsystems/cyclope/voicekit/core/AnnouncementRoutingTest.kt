@@ -1,4 +1,4 @@
-package org.blindsystems.cyclope.vision
+package org.blindsystems.cyclope.voicekit.core
 
 import org.junit.Assert.*
 import org.junit.Test
