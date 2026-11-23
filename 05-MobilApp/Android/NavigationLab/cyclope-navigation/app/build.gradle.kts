@@ -18,6 +18,8 @@ android {
         versionName = project.findProperty("cyclopeVersionName") as String
     }
 
+    testOptions { unitTests.isIncludeAndroidResources = true }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -42,6 +44,7 @@ dependencies {
     implementation(project(":navigation"))
     implementation(project(":voicekit"))
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.14.1")
     implementation("androidx.core:core-ktx:1.13.1") // FileProvider for "Share CSV"
 }
 
@@ -50,4 +53,11 @@ ktlint {
     filter {
         exclude("**/MainActivity.kt", "**/SmokeInstrumentedTest.kt")
     }
+}
+
+// Reuse NavigationLab's existing JVM Android shadows; no emulator or real positioning hardware.
+tasks.withType<Test>().configureEach {
+    maxHeapSize = "768m"
+    maxParallelForks = 1
+    systemProperty("robolectric.dependency.repo.url", "https://repo.maven.apache.org/maven2")
 }

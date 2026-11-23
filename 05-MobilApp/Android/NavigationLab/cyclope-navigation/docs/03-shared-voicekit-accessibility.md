@@ -64,8 +64,10 @@ Voicekit has the same four 80% gates over all pure core classes; Android adapter
 The copied voicekit tests and host bridge tests exercise routing/queues deterministically without a phone.
 Navigation ktlint retains its existing report-only policy; new host adapters and voicekit use blocking ktlint.
 Legacy MainActivity and the original smoke test are not reformatted for this integration.
-The existing non-blocking emulator job also checks native skip-link input focus and polite region attributes.
-That is not proof of TalkBack speech, real GPS, a real phone or physical accessibility usability.
+Five Robolectric Activity tests check the native skip-link, all labels/targets, polite regions, address label and mute action.
+They reuse the navigation project's existing Android shadows and run in the blocking quality job.
+The original non-blocking emulator trial is retained unchanged; macOS HVF may be unavailable.
+Neither JVM shadows nor emulator smoke tests prove TalkBack speech, real GPS or physical accessibility usability.
 Full Google Accessibility Test Framework integration remains future work, separate from Android Lint checks.
 On ARM64 Raspberry Pi, SDK aapt2 is x86-only; actual APK packaging is checked by the Ubuntu CI job.
 
