@@ -6,7 +6,7 @@ import json
 import zipfile
 from pathlib import Path
 
-REQUIRED = {"yolo26n_float16.tflite", "yolo26s_float16.tflite"}
+REQUIRED = {"yolo26n_float16.tflite", "yolo26s_float16.tflite", "yolo26m_float16.tflite"}
 BUS_SHA256 = "c02019c4979c191eb739ddd944445ef408dad5679acab6fd520ef9d434bfbc63"
 
 
@@ -68,7 +68,7 @@ def main():
     args = parser.parse_args()
     manifest = json.loads((args.assets / "model-manifest.json").read_text())
     if {m["file"] for m in manifest} != REQUIRED:
-        raise ValueError("Manifest must contain exactly the bundled nano and small models")
+        raise ValueError("Manifest must contain exactly the bundled nano, small and medium models")
     results = []
     for model in manifest:
         path = args.assets / model["file"]

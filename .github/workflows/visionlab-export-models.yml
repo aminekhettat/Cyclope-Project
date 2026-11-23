@@ -19,4 +19,5 @@ jobs:
       TF_NUM_INTEROP_THREADS: '2'
     steps:
       - uses: actions/checkout@v4
+      # Shared pinned export covers nano, small and medium; this workflow stays manual-only.
       - uses: ./05-MobilApp/Android/VisionLab/tools/export-action
