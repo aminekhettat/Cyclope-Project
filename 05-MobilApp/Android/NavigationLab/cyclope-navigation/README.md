@@ -38,3 +38,10 @@ the route is computed from the current position → walk, or press *Simulate wal
 
 Network services: `nominatim.openstreetmap.org` and `routing.openstreetmap.de/routed-foot`
 (max 1 request/s, identifying User-Agent set in `MainActivity.USER_AGENT`). Map data © OpenStreetMap contributors (ODbL).
+
+## Shared voice and accessibility (23/11/2026)
+
+The app now hosts the byte-identical VisionLab `:voicekit` module. Navigation algorithms and interfaces are unchanged.
+See [shared voicekit and TalkBack integration](docs/03-shared-voicekit-accessibility.md) for the module boundary,
+copy provenance, test commands and a step-by-step TalkBack checklist for Shanna and Taoyu.
+Speech-to-text is a reserved interface only; this integration adds no microphone permission.

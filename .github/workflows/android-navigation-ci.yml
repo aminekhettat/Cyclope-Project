@@ -57,14 +57,46 @@ jobs:
       - name: Version anti-drift check (single source = gradle.properties)
         run: ./gradlew --no-daemon verifyVersionSingleSource
 
-      - name: ktlint (style, report-only)
-        run: ./gradlew --no-daemon :navigation:ktlintCheck
+      - name: Shared voicekit provenance and accessibility contracts
+        run: |
+          python3 tools/verify_shared_voicekit.py
+          python3 tools/verify_accessibility_contract.py
+          ./gradlew --no-daemon :voicekit:verifySharedBoundary
+
+      - name: ktlint (navigation report-only, shared voice and adapters blocking)
+        run: ./gradlew --no-daemon :navigation:ktlintCheck :voicekit:ktlintCheck :app:ktlintCheck
 
       - name: Unit tests + JaCoCo coverage gate
-        run: ./gradlew --no-daemon :navigation:testDebugUnitTest :navigation:jacocoTestReport :navigation:jacocoTestCoverageVerification
+        run: ./gradlew --no-daemon :navigation:testDebugUnitTest :navigation:jacocoTestReport :navigation:jacocoTestCoverageVerification :voicekit:testDebugUnitTest :voicekit:jacocoTestReport :voicekit:jacocoTestCoverageVerification :app:testDebugUnitTest
 
       - name: Dokka HTML documentation
-        run: ./gradlew --no-daemon :navigation:dokkaHtml
+        run: ./gradlew --no-daemon :navigation:dokkaHtml :voicekit:dokkaHtml
+
+      - name: Android lint (app and shared accessibility module)
+        run: ./gradlew --no-daemon :app:lintDebug :voicekit:lintDebug
+
+      - name: Assemble real navigation debug APK
+        run: ./gradlew --no-daemon :app:assembleDebug
+
+      - name: Upload navigation debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: navigation-debug-apk
+          path: 05-MobilApp/Android/NavigationLab/cyclope-navigation/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Upload shared voicekit and host quality reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: navigation-voicekit-quality
+          path: |
+            05-MobilApp/Android/NavigationLab/cyclope-navigation/voicekit/build/reports/
+            05-MobilApp/Android/NavigationLab/cyclope-navigation/voicekit/build/test-results/
+            05-MobilApp/Android/NavigationLab/cyclope-navigation/voicekit/build/dokka/
+            05-MobilApp/Android/NavigationLab/cyclope-navigation/app/build/reports/
+            05-MobilApp/Android/NavigationLab/cyclope-navigation/app/build/test-results/
+          if-no-files-found: warn
 
       - name: Upload JaCoCo report (XML + HTML)
         if: always()
