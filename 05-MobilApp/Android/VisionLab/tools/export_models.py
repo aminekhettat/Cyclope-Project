@@ -24,7 +24,7 @@ def main():
         model = YOLO(f"yolo26{size}.pt")
         if len(model.names) != 80 or model.names[0] != "person" or model.names[79] != "toothbrush":
             raise RuntimeError("Expected the official 80-class COCO detection weights")
-        path = Path(model.export(format="tflite", quantize=16, nms=False, imgsz=640, batch=1, device="cpu"))
+        path = Path(model.export(format="tflite", quantize=16, nms=False, end2end=True, imgsz=640, batch=1, device="cpu"))
         runtime = tf.lite.Interpreter(model_path=str(path), num_threads=2)
         runtime.allocate_tensors()
         ins, outs = runtime.get_input_details(), runtime.get_output_details()
@@ -46,8 +46,8 @@ def main():
         info = {"file": dest.name, "bytes": dest.stat().st_size, "sha256": hashlib.sha256(dest.read_bytes()).hexdigest(), "input": ishape, "output": oshape, "ultralytics": ultralytics.__version__, "tensorflow": tf.__version__}
         manifest.append(info)
         print(json.dumps(info))
-        if dest.stat().st_size >= 25_000_000:
-            print("Over 25 MB: keep as local asset/team artifact; do not commit this model.")
+        if dest.stat().st_size >= 50_000_000:
+            print("Over 50 MB: keep as local asset/team artifact; do not commit this model.")
     (args.destination / "model-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
 
 
