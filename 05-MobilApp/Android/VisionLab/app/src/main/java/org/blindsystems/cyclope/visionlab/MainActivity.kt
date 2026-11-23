@@ -37,7 +37,12 @@ class MainActivity : ComponentActivity() {
     private var engine: YoloEngine? = null // Access only on worker.
 
     @Volatile private var selected = setOf(0, 1, 2, 9, 11)
-    private var modelSize = ModelSize.SMALL
+    private var modelSize = ModelSize.NANO
+    private var userModelChoice: ModelSize? = null
+    private lateinit var phoneCapabilities: PhoneCapabilities
+    private lateinit var recommendation: ModelRecommendation
+    private lateinit var recommendationText: TextView
+    private lateinit var modelSelector: RadioGroup
     private var delegateChoice = DelegateChoice.CPU
 
     @Volatile private var generation = 0
@@ -58,7 +63,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val saved = getPreferences(MODE_PRIVATE)
-        modelSize = runCatching { ModelSize.valueOf(saved.getString("size", "SMALL")!!) }.getOrDefault(ModelSize.SMALL)
+        phoneCapabilities = DeviceInfo.collect(this)
+        recommendation = ModelAdvisor.evaluate(phoneCapabilities, saved.getString("size", null))
+        modelSize = recommendation.selected
+        userModelChoice = if (recommendation.hasUserChoice) modelSize else null
         delegateChoice = runCatching { DelegateChoice.valueOf(saved.getString("delegate", "CPU")!!) }.getOrDefault(DelegateChoice.CPU)
         selected = saved.getStringSet("classes", null)?.mapNotNull(String::toIntOrNull)?.filter { it in 0..79 }?.toSet() ?: selected
         val scroll = ScrollView(this).apply { isFillViewport = true }
@@ -71,18 +79,23 @@ class MainActivity : ComponentActivity() {
         val title = text("Cyclope VisionLab — learn object detection", 24f)
         VoiceAccessibility.heading(title)
         column.addView(title)
-        column.addView(text("Phone camera only. Small model is the starting point. This is a learning tool, not a navigation or safety aid."))
+        column.addView(text("Phone camera only. Choose the recommended model or any other size. This is a learning tool, not a navigation or safety aid."))
         column.addView(button("Device info") { deviceInfo() })
         column.addView(button("Choose object classes") { chooseClasses() })
         column.addView(text("Model size"))
+        recommendationText = text(recommendation.explanation).apply { VoiceAccessibility.polite(this, focusable = true) }
+        column.addView(recommendationText)
+        modelSelector = RadioGroup(this).apply { orientation = RadioGroup.VERTICAL }
+        column.addView(modelSelector)
+        updateModelSelector()
         column.addView(
-            selector(ModelSize.entries.map { it.name.lowercase() }, modelSize.ordinal, "Model size. Small is the default") { index ->
-                val next = ModelSize.entries[index]
-                if (next != modelSize) {
-                    modelSize = next
-                    saveSettings()
-                    reloadIfRunning()
-                }
+            button("Reevaluate model recommendation") {
+                phoneCapabilities = DeviceInfo.collect(this)
+                recommendation = ModelAdvisor.evaluate(phoneCapabilities, userModelChoice?.name)
+                val changed = modelSize != recommendation.selected
+                modelSize = recommendation.selected
+                updateModelSelector()
+                if (changed) reloadIfRunning()
             },
         )
         column.addView(text("Inference delegate"))
@@ -165,6 +178,34 @@ class MainActivity : ComponentActivity() {
         mute.text = if (speech.muted) "Unmute speech" else "Mute speech"
         VoiceAccessibility.label(mute, mute.text)
         showModelAvailability()
+    }
+
+    private fun updateModelSelector() {
+        modelSelector.removeAllViews()
+        ModelAdvisor.options(recommendation).forEach { option ->
+            modelSelector.addView(
+                RadioButton(this).apply {
+                    id = View.generateViewId()
+                    text = option.label
+                    tag = option.size
+                    minHeight = dp(48)
+                    VoiceAccessibility.label(this, option.label)
+                    isChecked = option.size == modelSize
+                    setOnClickListener { chooseModel(option.size) }
+                },
+            )
+        }
+        VoiceAccessibility.publishPolite(recommendationText, recommendation.explanation)
+    }
+
+    private fun chooseModel(next: ModelSize) {
+        val changed = next != modelSize
+        modelSize = next
+        userModelChoice = next
+        recommendation = ModelAdvisor.evaluate(phoneCapabilities, next.name)
+        VoiceAccessibility.publishPolite(recommendationText, recommendation.explanation)
+        saveSettings()
+        if (changed) reloadIfRunning()
     }
 
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
@@ -261,7 +302,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun saveSettings() {
-        getPreferences(MODE_PRIVATE).edit().putString("size", modelSize.name).putString("delegate", delegateChoice.name).putStringSet("classes", selected.map(Int::toString).toSet()).apply {
+        getPreferences(MODE_PRIVATE).edit().putString("size", userModelChoice?.name).putString("delegate", delegateChoice.name).putStringSet("classes", selected.map(Int::toString).toSet()).apply {
             if (::speech.isInitialized) putBoolean("muted", speech.muted)
         }.apply()
     }
