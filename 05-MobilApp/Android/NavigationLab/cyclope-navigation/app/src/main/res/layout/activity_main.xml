@@ -90,11 +90,17 @@
             android:textStyle="bold"
             android:id="@+id/headingNavigation"
             android:textColor="@color/nav_foreground" />
+        <TextView
+            android:id="@+id/labelAddress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:labelFor="@id/etAddress"
+            android:text="@string/address_hint"
+            android:textColor="@color/nav_foreground" />
         <EditText
             android:id="@+id/etAddress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/address_hint"
             android:inputType="textPostalAddress"
             android:importantForAutofill="no"
             android:minHeight="48dp"

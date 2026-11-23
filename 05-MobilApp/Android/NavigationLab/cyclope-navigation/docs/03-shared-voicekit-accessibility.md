@@ -41,6 +41,9 @@ We keep these host-specific notes outside voicekit to preserve the exact copy.
 13. Check large fonts, landscape, narrow screens, focus visibility and every target's usability.
 
 `contentDescription`, native widget roles, text labels and minimum 48dp targets are explicit.
+The address field has a persistent visible label (`labelFor`) instead of a hint masked by contentDescription.
+The explicit skip control requests accessibility focus only after the user activates it; Android Lint
+still reports AccessibilityFocus as a caution. There is no automatic/background focus change or suppression.
 Dark text on a white surface and a fixed dark-blue accent avoid color-only meaning.
 Native headings are exposed through shared helpers, retaining AccessibilityNodeInfo roles/actions.
 Only an explicit read/skip action moves or requests accessibility focus; background updates do not.

@@ -17,6 +17,8 @@ for name in ["tvStatus", "tvAnnouncements"]:
 for name in ["tvSources", "tvNav"]:
     assert by_id[name].get(a + "accessibilityLiveRegion") == "none", "Unbounded logs must not spam TalkBack"
 assert next(iter(layout[0])).get(a + "id") == "@+id/btnSkipNavigation"
+assert by_id["labelAddress"].get(a + "labelFor") == "@id/etAddress"
+assert by_id["etAddress"].get(a + "hint") is None, "Do not mask an EditText hint with contentDescription"
 activity = (root / "app/src/main/java/org/blindsystems/cyclope/navlab/MainActivity.kt").read_text()
 assert "etAddress.requestFocus()" in activity and "ACTION_ACCESSIBILITY_FOCUS" in activity
 assert "VoiceAccessibility.announceRequested" in activity
