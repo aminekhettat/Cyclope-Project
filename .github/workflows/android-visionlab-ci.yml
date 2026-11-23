@@ -1,0 +1,68 @@
+name: VisionLab CI
+
+on:
+  push:
+    branches: [CYCLOPE_GEN3_AndroidVision]
+    paths:
+      - '05-MobilApp/Android/VisionLab/**'
+      - '.github/workflows/android-visionlab-ci.yml'
+  pull_request:
+    branches: [CYCLOPE_GEN3_AndroidVision]
+    paths:
+      - '05-MobilApp/Android/VisionLab/**'
+      - '.github/workflows/android-visionlab-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: visionlab-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-and-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: 05-MobilApp/Android/VisionLab
+    steps:
+      - uses: actions/checkout@v4
+      - name: JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+      - name: Android SDK 35
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Version anti-drift
+        run: ./gradlew --no-daemon verifyVersionSingleSource
+      - name: Blocking ktlint
+        run: ./gradlew --no-daemon ktlintCheck
+      - name: Offline JVM tests and JaCoCo
+        run: ./gradlew --no-daemon :vision:test :vision:jacocoTestReport
+      - name: Dokka API documentation
+        run: ./gradlew --no-daemon :vision:dokkaHtml
+      - name: Assemble real debug APK
+        run: ./gradlew --no-daemon :app:assembleDebug
+      - name: Publish debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: visionlab-debug-apk
+          path: 05-MobilApp/Android/VisionLab/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+      - name: Publish quality reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visionlab-quality-reports
+          path: |
+            05-MobilApp/Android/VisionLab/vision/build/reports/
+            05-MobilApp/Android/VisionLab/vision/build/test-results/
+            05-MobilApp/Android/VisionLab/vision/build/dokka/
+            05-MobilApp/Android/VisionLab/app/build/reports/ktlint/
+            05-MobilApp/Android/VisionLab/build/reports/ktlint/
+          if-no-files-found: warn
