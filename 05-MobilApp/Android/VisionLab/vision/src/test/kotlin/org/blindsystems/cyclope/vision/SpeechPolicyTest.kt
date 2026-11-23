@@ -8,8 +8,7 @@ class SpeechPolicyTest {
         id: Int,
         time: Long = 0,
         mute: Boolean = false,
-        reader: Boolean = false,
-    ) = offer(id, time, mute, reader)
+    ) = offer(id, time, mute)
 
     @Test fun firstDetectionAtTimeZeroIsAccepted() {
         assertTrue(SpeechPolicy().offer(0))
@@ -69,8 +68,12 @@ class SpeechPolicyTest {
         assertFalse(SpeechPolicy().offer(0, mute = true))
     }
 
-    @Test fun screenReaderPreventsSpeech() {
-        assertFalse(SpeechPolicy().offer(0, reader = true))
+    @Test fun accessibilityRoutingDoesNotDiscardTheObjectQueue() {
+        val policy = SpeechPolicy()
+        assertTrue(policy.offer(0))
+        assertEquals(0, policy.peek())
+        assertEquals(0, policy.poll())
+        assertNull(policy.peek())
     }
 
     @Test fun rejectedMutedDoesNotConsumeCooldown() {
