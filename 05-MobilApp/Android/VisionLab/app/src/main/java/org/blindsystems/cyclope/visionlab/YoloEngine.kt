@@ -34,12 +34,11 @@ class YoloEngine(context: Context, size: ModelSize, requested: DelegateChoice) :
     private val parser = YoloParser()
 
     init {
+        // noCompress in Gradle lets us map weights without a second full copy in Java memory.
         val model =
-            context.assets.open(size.assetName).use { stream ->
-                val bytes = stream.readBytes()
-                ByteBuffer.allocateDirect(bytes.size).order(ByteOrder.nativeOrder()).apply {
-                    put(bytes)
-                    rewind()
+            context.assets.openFd(size.assetName).use { descriptor ->
+                java.io.FileInputStream(descriptor.fileDescriptor).use { stream ->
+                    stream.channel.map(java.nio.channels.FileChannel.MapMode.READ_ONLY, descriptor.startOffset, descriptor.declaredLength)
                 }
             }
         val gpu = runCatching { CompatibilityList().use { it.isDelegateSupportedOnThisDevice } }.getOrDefault(false)

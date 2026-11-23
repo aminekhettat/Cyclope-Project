@@ -135,6 +135,8 @@ Automatic TalkBack detection uses Android's accessibility + touch-exploration si
 
 Gradle 8.9, AGP 8.7.3 and JDK 17 follow NavigationLab conventions. Dependencies use `gradle/libs.versions.toml`. The library is intentionally JVM-only rather than Android-dependent: no resource compiler or framework is needed to test pure logic. `cyclopeVersionName` and `cyclopeVersionCode` in `gradle.properties` are the only version source. Use `./gradlew bumpVersion -Pbump=patch` to increment them. CI checks for drift.
 
+For local style fixes, run `./gradlew ktlintFormat` first. Then run the check in a separate command. Formatting and verification must not modify/read the same files concurrently.
+
 ktlint is **blocking**, not report-only. We use ktlint alone for this teaching-sized project: another configurable static analyzer would add noise before Shanna knows the code. JaCoCo produces actual coverage reports; no unmeasured percentage is advertised. Dokka builds the library API documentation.
 
 Tests cover class selection, malformed/end-to-end/legacy output parsing, NMS, letterbox/screen geometry, speech queue/cooldown/accessibility suppression and delegate policy. They are deterministic and offline after Gradle dependencies are cached. No instrumented camera/GPU tests are fabricated for CI.
