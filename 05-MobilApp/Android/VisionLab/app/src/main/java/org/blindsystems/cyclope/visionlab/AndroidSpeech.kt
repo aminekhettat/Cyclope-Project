@@ -5,15 +5,20 @@ import android.os.SystemClock
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.view.accessibility.AccessibilityManager
+import org.blindsystems.cyclope.vision.AnnouncementRoute
 import org.blindsystems.cyclope.vision.CocoLabels
 import org.blindsystems.cyclope.vision.Detection
 import org.blindsystems.cyclope.vision.SpeechPolicy
+import org.blindsystems.cyclope.vision.UpdateGate
+import org.blindsystems.cyclope.vision.announcementRoute
 import java.util.Locale
 
 /** All policy and TTS calls happen on the main thread. A screen reader always has priority. */
-class AndroidSpeech(private val context: Context, private val report: (String) -> Unit) {
+class AndroidSpeech(private val context: Context, private val announceAccessibility: (String) -> Unit, private val report: (String) -> Unit) {
     private val accessibility = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
     private val policy = SpeechPolicy()
+    private val accessibilityUpdates = UpdateGate(10000)
+    private var lastRoute = AnnouncementRoute.MUTED
     private val main = android.os.Handler(android.os.Looper.getMainLooper())
     private var ready = false
     private var busy = false
@@ -39,7 +44,7 @@ class AndroidSpeech(private val context: Context, private val report: (String) -
                         val language = engine!!.setLanguage(Locale.FRENCH)
                         ready = language != TextToSpeech.LANG_MISSING_DATA && language != TextToSpeech.LANG_NOT_SUPPORTED
                     }
-                    report(if (ready) "Speech ready. TalkBack has priority." else "French speech unavailable. Install a French TTS voice; text detections remain available.")
+                    report(if (ready) "Speech ready. TalkBack receives polite accessibility events instead of raw TTS." else "French speech unavailable. Install a French TTS voice; text detections remain available.")
                 }
             }
         tts?.setOnUtteranceProgressListener(
@@ -72,13 +77,28 @@ class AndroidSpeech(private val context: Context, private val report: (String) -
     }
 
     fun offer(detections: List<Detection>) {
-        if (!ready) return
-        if (muted || screenReader) {
-            stop()
-            return
+        val route = announcementRoute(muted, screenReader)
+        if (route != lastRoute) {
+            stop() // Also cancels raw TTS before switching to the accessibility service.
+            lastRoute = route
         }
-        for (d in detections) policy.offer(d.classId, SystemClock.elapsedRealtime(), muted, screenReader)
-        next()
+        if (route == AnnouncementRoute.MUTED) return
+        if (route == AnnouncementRoute.TTS && !ready) return
+        val now = SystemClock.elapsedRealtime()
+        for (d in detections) policy.offer(d.classId, now, muted)
+        if (route == AnnouncementRoute.ACCESSIBILITY) {
+            // This path works even when no French Android TTS voice is installed.
+            if (policy.peek() != null && accessibilityUpdates.mayPublish(now)) {
+                val messages = mutableListOf<String>()
+                while (policy.peek() != null) {
+                    val id = policy.poll()!!
+                    messages += "${CocoLabels.french[id]} détecté"
+                }
+                announceAccessibility(messages.joinToString(". "))
+            }
+        } else {
+            next()
+        }
     }
 
     private fun next() {
@@ -97,6 +117,7 @@ class AndroidSpeech(private val context: Context, private val report: (String) -
 
     fun stop() {
         activeUtterance = null
+        accessibilityUpdates.reset()
         policy.clear()
         tts?.stop()
         busy = false

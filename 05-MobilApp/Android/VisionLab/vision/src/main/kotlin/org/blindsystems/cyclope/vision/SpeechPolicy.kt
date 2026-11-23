@@ -13,15 +13,16 @@ class SpeechPolicy(private val intervalMs: Long = 5000, private val capacity: In
         classId: Int,
         nowMs: Long,
         muted: Boolean,
-        screenReader: Boolean,
     ): Boolean {
-        if (muted || screenReader || classId !in 0..79 || classId in queue || queue.size >= capacity) return false
+        if (muted || classId !in 0..79 || classId in queue || queue.size >= capacity) return false
         val last = lastQueued[classId]
         if (last != null && nowMs - last < intervalMs) return false
         queue.addLast(classId)
         lastQueued[classId] = nowMs
         return true
     }
+
+    fun peek(): Int? = queue.firstOrNull()
 
     fun poll(): Int? = queue.removeFirstOrNull()
 

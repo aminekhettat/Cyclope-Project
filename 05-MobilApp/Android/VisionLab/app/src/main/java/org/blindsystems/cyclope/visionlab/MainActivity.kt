@@ -40,6 +40,9 @@ class MainActivity : ComponentActivity() {
 
     @Volatile private var running = false
     private var lastUpdateMs = 0L
+    private var latestSummary = "Detections: none."
+    private val accessibleMetricsUpdates = UpdateGate(15000)
+    private val emptySummaryUpdates = UpdateGate(10000)
     private var fpsStartMs = 0L
     private var frameCount = 0
     private var measuredFps = 0f
@@ -66,6 +69,7 @@ class MainActivity : ComponentActivity() {
         column.addView(title)
         column.addView(text("Phone camera only. Small model is the starting point. This is a learning tool, not a navigation or safety aid."))
         column.addView(button("Device info") { deviceInfo() })
+        column.addView(button("Choose object classes") { chooseClasses() })
         column.addView(text("Model size"))
         column.addView(
             selector(ModelSize.entries.map { it.name.lowercase() }, modelSize.ordinal, "Model size. Small is the default") { index ->
@@ -88,14 +92,13 @@ class MainActivity : ComponentActivity() {
                 }
             },
         )
-        column.addView(button("Choose object classes") { chooseClasses() })
         val mute = button("Mute speech") { }
         mute.setOnClickListener {
             speech.muted = !speech.muted
             mute.text = if (speech.muted) "Unmute speech" else "Mute speech"
             mute.contentDescription = mute.text
             saveSettings()
-            setStatus(if (speech.muted) "Speech muted. Text detections remain available." else "Speech enabled. When TalkBack is active, read the text summary instead.")
+            setStatus(if (speech.muted) "Speech muted. Text detections remain available." else "Speech enabled. With TalkBack, object messages use the polite live region instead of raw TTS.")
         }
         column.addView(mute)
         startButton =
@@ -108,16 +111,20 @@ class MainActivity : ComponentActivity() {
                     permission.launch(Manifest.permission.CAMERA)
                 }
             }
-        column.addView(startButton)
+        column.addView(startButton, 4) // Device info -> classes -> camera -> model/delegate/mute controls.
         status = text("Camera stopped. Select classes, then start the camera.").apply { accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE }
         column.addView(status)
         val speechStatus = text("Speech: initializing. TalkBack has priority.")
         column.addView(speechStatus)
-        metrics = text("Performance: no measurements yet. FPS counts processed frames, not camera preview frames.")
+        metrics = text("Performance: no measurements yet. FPS counts processed frames, not camera preview frames.").apply { accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE }
         column.addView(metrics)
-        summary = text("Detections: none. The summary is the text equivalent of the boxes.").apply { isFocusable = true }
+        summary =
+            text("Detections: none. The summary is the text equivalent of the boxes.").apply {
+                isFocusable = true
+                accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
+            }
         column.addView(summary)
-        column.addView(button("Read current detections") { summary.announceForAccessibility(summary.text) })
+        column.addView(button("Read current detections") { summary.announceForAccessibility(latestSummary) })
         val frame = FrameLayout(this)
         preview =
             PreviewView(this).apply {
@@ -142,7 +149,15 @@ class MainActivity : ComponentActivity() {
             }
             insets
         }
-        speech = AndroidSpeech(this) { message -> if (!isDestroyed) speechStatus.text = message }
+        speech =
+            AndroidSpeech(
+                this,
+                announceAccessibility = { message ->
+                    // POLITE emits a framework AccessibilityEvent. Do not also announce the same update.
+                    summary.text = "$message. $latestSummary"
+                },
+                report = { message -> if (!isDestroyed) speechStatus.text = message },
+            )
         speech.muted = saved.getBoolean("muted", false)
         mute.text = if (speech.muted) "Unmute speech" else "Mute speech"
         mute.contentDescription = mute.text
@@ -192,6 +207,7 @@ class MainActivity : ComponentActivity() {
                         position: Int,
                         id: Long,
                     ) {
+                        contentDescription = "$label. Selected ${items[position]}"
                         changed(position)
                     }
                 }
@@ -204,8 +220,44 @@ class MainActivity : ComponentActivity() {
     private fun clearDetections() {
         overlay.detections = emptyList()
         overlay.invalidate()
-        summary.text = "Detections: none. ${selected.size} of 80 classes selected."
+        latestSummary = "Detections: none. ${selected.size} of 80 classes selected."
+        summary.text = latestSummary
+        accessibleMetricsUpdates.reset()
+        emptySummaryUpdates.reset()
         speech.stop()
+    }
+
+    /** Standard widgets already supply role/checked state through AccessibilityNodeInfo. Keep it. */
+    private fun showAccessibleDialog(builder: AlertDialog.Builder) {
+        val dialog = builder.show()
+        for (which in listOf(AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE, AlertDialog.BUTTON_NEUTRAL)) {
+            dialog.getButton(which)?.let { button ->
+                button.contentDescription = button.text
+                button.minHeight = dp(48)
+            }
+        }
+        dialog.listView?.let { list ->
+            fun describeRow(row: View) {
+                row.minimumHeight = dp(48)
+                if (row is TextView) row.contentDescription = row.text
+            }
+            for (index in 0 until list.childCount) describeRow(list.getChildAt(index))
+            list.setOnHierarchyChangeListener(
+                object : android.view.ViewGroup.OnHierarchyChangeListener {
+                    override fun onChildViewAdded(
+                        parent: View?,
+                        child: View?,
+                    ) {
+                        child?.let(::describeRow)
+                    }
+
+                    override fun onChildViewRemoved(
+                        parent: View?,
+                        child: View?,
+                    ) = Unit
+                },
+            )
+        }
     }
 
     private fun deviceInfo() {
@@ -216,7 +268,7 @@ class MainActivity : ComponentActivity() {
                 setTextColor(android.graphics.Color.BLACK)
                 setPadding(dp(16), dp(8), dp(16), dp(8))
             }
-        AlertDialog.Builder(this).setTitle("Device info — capabilities, not promises").setView(ScrollView(this).apply { addView(detail) }).setPositiveButton("Close", null).show()
+        AlertDialog.Builder(this).setTitle("Device info — capabilities, not promises").setView(ScrollView(this).apply { addView(detail) }).setPositiveButton("Close", null).let(::showAccessibleDialog)
     }
 
     private fun chooseClasses() {
@@ -237,7 +289,7 @@ class MainActivity : ComponentActivity() {
                 saveSettings()
                 setStatus("No classes selected. No boxes or speech.")
             }
-            .setNegativeButton("Cancel", null).show()
+            .setNegativeButton("Cancel", null).let(::showAccessibleDialog)
     }
 
     private fun saveSettings() {
@@ -352,12 +404,16 @@ class MainActivity : ComponentActivity() {
                 overlay.sourceHeight = h
                 overlay.detections = visible
                 overlay.invalidate()
+                latestSummary = if (visible.isEmpty()) "Detections: none among ${selected.size} selected classes." else "Detections: " + visible.take(12).joinToString { "${CocoLabels.english[it.classId]} ${(it.confidence * 100).toInt()} percent" } + if (visible.size > 12) "; ${visible.size - 12} more" else ""
                 speech.offer(visible)
-                if (now - lastUpdateMs >= 1500) {
+                val talkBack = speech.screenReader
+                val publishMetrics = if (talkBack) accessibleMetricsUpdates.mayPublish(now) else now - lastUpdateMs >= 1500
+                if (publishMetrics) {
                     lastUpdateMs = now
                     metrics.text = String.format(Locale.US, "Processed FPS %.1f; inference %.1f ms; pipeline %.1f ms. Pipeline excludes camera conversion and drawing.", fps, result.inferenceMs, result.pipelineMs)
-                    summary.text = if (visible.isEmpty()) "Detections: none among ${selected.size} selected classes." else "Detections: " + visible.take(12).joinToString { "${CocoLabels.english[it.classId]} ${(it.confidence * 100).toInt()} percent" } + if (visible.size > 12) "; ${visible.size - 12} more" else ""
                 }
+                if (!talkBack && publishMetrics) summary.text = latestSummary
+                if (talkBack && visible.isEmpty() && emptySummaryUpdates.mayPublish(now) && summary.text.toString() != latestSummary) summary.text = latestSummary
             }
         } catch (e: Exception) {
             // A delegate can fail on invoke, not only on construction. Stop once; do not loop failures.
