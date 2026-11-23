@@ -43,7 +43,9 @@ jobs:
       - name: Blocking ktlint
         run: ./gradlew --no-daemon ktlintCheck
       - name: Offline JVM tests and JaCoCo
-        run: ./gradlew --no-daemon :vision:test :vision:jacocoTestReport
+        run: ./gradlew --no-daemon :vision:test :vision:jacocoTestReport :vision:jacocoTestCoverageVerification
+      - name: Android lint including static accessibility checks
+        run: ./gradlew --no-daemon :app:lintDebug
       - name: Dokka API documentation
         run: ./gradlew --no-daemon :vision:dokkaHtml
       - name: Assemble real debug APK
@@ -63,6 +65,6 @@ jobs:
             05-MobilApp/Android/VisionLab/vision/build/reports/
             05-MobilApp/Android/VisionLab/vision/build/test-results/
             05-MobilApp/Android/VisionLab/vision/build/dokka/
-            05-MobilApp/Android/VisionLab/app/build/reports/ktlint/
+            05-MobilApp/Android/VisionLab/app/build/reports/
             05-MobilApp/Android/VisionLab/build/reports/ktlint/
           if-no-files-found: warn

@@ -18,3 +18,17 @@ tasks.jacocoTestReport {
         html.required.set(true)
     }
 }
+
+tasks.jacocoTestCoverageVerification {
+    dependsOn(tasks.jacocoTestReport)
+    violationRules {
+        rule {
+            listOf("INSTRUCTION", "LINE", "BRANCH", "METHOD").forEach { metric ->
+                limit {
+                    counter = metric
+                    minimum = "0.80".toBigDecimal()
+                }
+            }
+        }
+    }
+}
