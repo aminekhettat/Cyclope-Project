@@ -20,6 +20,7 @@ object DeviceInfo {
         val gl = (context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).deviceConfigurationInfo.glEsVersion
 
         val nnapi = if (Build.VERSION.SDK_INT >= 27) "API available; hardware execution is driver-dependent." else "Unavailable before Android 8.1/API 27."
+
         fun mb(bytes: Long) = bytes / (1024 * 1024)
         return """
             Phone: ${Build.MANUFACTURER} ${Build.MODEL}
