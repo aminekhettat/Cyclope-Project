@@ -1,0 +1,41 @@
+{
+  "review_date": "2026-11-23",
+  "repository": "https://github.com/aminekhettat/Cyclope-Project",
+  "source_branch": "CYCLOPE_GEN3_HW",
+  "source_commit": "2a386bfb4b065d00b9fc5a9dd63239f78151ab5d",
+  "source_latest_author": "akhettat <blindgeek0@gmail.com>",
+  "source_schematic": "02-Embedded/02-Hardware/Eagle_Version/MAKKI_ISMAIL_ESPS3_CAM/MAKKI_ISMAIL_ESPS3_CAM/MAKKI_ISMAIL_ESPS3_CAM.sch",
+  "source_schematic_sha256": "1b0aa8d1c8b6f7e7b69180def2f10efc5bd0b652e2d7a7a7dd6abb78086e92a8",
+  "workbook": "Analysis of BOM.xlsx supplied by Sean; unchanged; not redistributed",
+  "counts": {
+    "bom-camera-baseline-target46.csv": {
+      "rows": 27,
+      "placements": 46
+    },
+    "bom-camera-arch2-rev2.csv": {
+      "rows": 36,
+      "placements": 56
+    },
+    "bom-battery-arch2-two-port.csv": {
+      "rows": 38,
+      "placements": 65
+    }
+  },
+  "status": "Documentary proposals only; no CAD edits, measurements or manufacturing release.",
+  "jlcpcb_reference_count": 77,
+  "jlcpcb_first_utc": "2026-11-23T02:07:24.059190+00:00",
+  "jlcpcb_last_utc": "2026-11-23T02:16:36.110093+00:00",
+  "jlcpcb_method": "Public SMT v2 component search, exact returned componentCode",
+  "jlcpcb_zero_stock_codes": [
+    "C184366",
+    "C188809",
+    "C3169263",
+    "C5656610",
+    "C19272845",
+    "C20616661"
+  ],
+  "jlcpcb_negative_quota_codes": [
+    "C160404",
+    "C19272845"
+  ]
+}

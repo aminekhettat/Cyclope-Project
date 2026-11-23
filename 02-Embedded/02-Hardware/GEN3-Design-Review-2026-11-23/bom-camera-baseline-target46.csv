@@ -1,0 +1,28 @@
+designator,value,footprint,lcsc,type_basic_extended,qty,notes
+"C1,C2,C3,C6,C7,C9,C14,C_USB_IN",10uF,0805-NO,C15850,Basic,8,Baseline target46; retained bulk decoupling plus proposed direct MCP73831 VDD input decoupling. Effective capacitance and final placement need qualification.
+"C4,C5,C10",1uF,0603-NO,C15849,Basic,3,"Retained local decoupling/reserve. C5 and R17 on IO47_DBLTAP are an unresolved reserve, not evidence of a fitted sensor."
+"C12,C15",100pF,0805-NO,C1790,Basic,2,Retained original 100pF values; camera-rail stability and final module requirements require review.
+"R1,R2,R4,R5,R8",5.1K,0603-NO,C23186,Basic,5,Baseline only: R1 reset; R2 charge LED; R4 MCP73831 PROG; R5 CC2 Rd and R8 CC1 Rd. Equal resistance does not mean equal role.
+"R6,R11",1K,0603-NO,C21190,Basic,2,"Retain source functions; R11 is in camera Q1 gate bias, not the removed battery selector."
+"R7,R12,BB_RPG",100K,0603-NO,C25803,Basic,3,R7 enable; R12 battery-selector gate reference; proposed buck-boost power-good pull-up.
+R17,1Meg,0603-NO,C22935,Basic,1,1Mohm reserve on IO47_DBLTAP; optional removal not counted.
+R66,10K,0603-NO,C25804,Basic,1,10kohm camera Q1 gate bias to 3.3V; distinct from Q3 battery selector.
+R3,10kohm x4 resistor array,RESPACK_4X0603,C29718,Basic,1,One physical four-resistor array. SCCB/I2C pull-up voltage and camera DOVDD require review.
+"Q1,Q3",DMG3415U,SOT23-R,C7202986,Extended,2,"Baseline: two separate DMG3415U instances. Q1 feeds camera LDO, Q3 selects USB versus cell."
+D4,MBR540,SOD-123,,UNRESOLVED,1,Unresolved SOD-123 Schottky purchasing choice. Linked axial MBR540 is not footprint-compatible. Baseline architecture1 selector function retained.
+CHG,ORANGE,CHIPLED_0603_NOOUTLINE,,UNRESOLVED,1,Existing charge indicator; exact purchasing MPN unresolved. Not one of removed user illumination LEDs.
+U3,MCP73831T-2ACI/OT,SOT23-5,C424093,Extended,1,"Existing Eagle MCP73831 charge-only charger. No true system power-path, boost, USB-C DRP or NTC input."
+IC1,LC709203F/MH,WLCSP9,,UNRESOLVED,1,Existing Eagle LC709203F/MH. Full orderable suffix unresolved; MAX17048 is a NEW replacement requiring footprint/firmware change.
+IC2,ESP32-S3-WROOM-1-N16R8,ESP32S3WROOM1N16R8,C2913202,Extended,1,Retain ESP32-S3-WROOM-1-N16R8; Octal PSRAM affects available GPIO. Assembly/antenna requirements need qualification.
+IC3,XC6206P282MR-G,SOT95P280X130-3N,C2891263,Extended,1,"Existing 2.8V camera LDO, retained conditionally. Does not generate the proposed 1.5V core rail."
+J1,2-2328702-4,223287024,C3169263,Extended,1,Conditional footprint/pinout. Choose module first; existing TE part stock-zero; proposed Hirose is not a drop-in substitute.
+X1,JSTPH,JSTPH2_BATT,,UNRESOLVED,1,Baseline battery connector function; exact MPN unresolved. Still present in Eagle.
+X3,USB C,USB_C_CUSB31-CFM2AX-01-X,,UNRESOLVED,1,5V sink and native USB flash. Architecture2 purchasing candidate needs new footprint review; not a raw-cell port.
+CONN1,JST SH,JST_SH4_RA,,UNRESOLVED,1,"External I2C connector function; actual MPN/footprint and pinout to qualify. Architecture2 XYECONN is a candidate, not JST proof."
+"SW1,SW2",KMR2,BTN_KMR2_4.6X2.8,,UNRESOLVED,2,"Two maintenance boot/reset switches, separate from user buttons. KMR232 candidate footprint must be checked."
+BB_U1,TPS63802DLAR,VSON-HR-10 DLA 2x3mm,C2845237,Extended,1,"Proposed TPS63802, NEW versus Eagle; raw-cell to3.3V buck-boost for architecture1; seven-part stage."
+BB_L1,"0.47uH ±20%, Isat5.5A, Irms4.5A",0806 / 2.0x1.6x1.2mm,C668312,Extended,1,"Proposed buck-boost inductor; current, thermal, footprint and exact TI layout to qualify."
+BB_CIN,10uF 10V X5R ±20%,0603,C90053,Extended,1,Proposed buck-boost input decoupling; effective capacitance at operating bias to qualify.
+BB_COUT,22uF 6.3V X5R ±20%,0603,C77042,Extended,1,Proposed buck-boost output decoupling; effective capacitance and stability to qualify.
+BB_RFBH,"511K ±1%, 100mW",0603,C23194,Extended,1,Proposed TPS63802 feedback upper resistor; confirm selected output target.
+BB_RFBL,"91K ±1%, 100mW",0603,C23265,Extended,1,Proposed TPS63802 feedback lower resistor; confirm selected output target.

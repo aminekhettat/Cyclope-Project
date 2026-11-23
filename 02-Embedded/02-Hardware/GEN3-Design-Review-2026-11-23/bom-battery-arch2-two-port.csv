@@ -1,0 +1,39 @@
+designator,value,footprint,lcsc,type_basic_extended,qty,notes
+B_CHG,BQ24074RGTR,QFN16-EP3x3,C54313,Extended,1,"NEW power-path charger, not merely relocated MCP73831.2kohm ISET about445mA typical; NTC window/timer/thermal remain open."
+B_BOOST,TPS61023DRLR,SOT5631.2x1.6,C919459,Extended,1,NEW synchronous cell/system-rail to5V boost.1.5A output requires low-cell/thermal/current-limit qualification.
+B_CC_OUT,TUSB320LAIRWBR,X2QFN12 1.6x1.6,C132554,Extended,1,NEW source-only CC controller; enable VBUS after attachment. Do not parallel external Rp with internal advertisement.
+B_PORT_SW,TPS2553DBVR,SOT23-6,C55266,Extended,1,"NEW current-limited output switch; qualify source current setting, reverse isolation and discharge; add protection if needed."
+B_MCU,CH32V203F6P6,TSSOP20,C3040880,Extended,1,"NEW CH32V203 USB-host MCU for telemetry; native USB to ESP32 device, role-safe firmware required. Extended, not Basic."
+B_GAUGE,MAX17048G+T10,DFN8-EP2x2,C2682616,Extended,1,"NEW MAX17048 battery-local gauge; replacement of Eagle LC709203F function, not footprint/firmware compatible."
+B_LDO,AP2112K-3.3TRG1,SOT25-5,C51118,Extended,1,NEW3.3V MCU supply from cell/system rail; dropout and quiescent current to qualify.
+B_L1,"SLO0415S1R0MTT,1uH20% Irms4A Isat6A",4.3x4x1.5mm,C325988,Extended,1,"1uH20%, Irms4A, Isat6A,4.3x4x1.5mm; max50mohm DCR causes0.45W at3A. Thermal review required."
+"B_USB_IN,B_USB_OUT",TYPE-C-31-M-12,USB2 HRO16P,C165948,Extended,2,Separate charge-input sink and power/data-output source. Candidate new connector footprints; clear tactile/text labels.
+"B_CIN1,B_CIN2",22uF25V X5R,0805,C45783,Basic,2,Boost input decoupling; effective ceramic capacitance and power-path transient behaviour to qualify.
+"B_COUT1,B_COUT2,B_COUT3",22uF25V X5R,0805,C45783,Basic,3,"Boost output decoupling; validate stability, transient, effective capacitance and source inrush."
+B_CPORT,MPD151M1AD19015R 150uF10V polymer20%,7.3x4.3x1.9mm,C51949781,Extended,1,Low-profile150uF10V polymer20%;7.3x4.3x1.9mm; source inrush and VBUS discharge must be qualified.
+B_CCHGIN,1uF,0603,C15849,Basic,1,Local charger input decoupling per manufacturer; final input transient requirement to qualify.
+B_CBAT,10uF25V X5R,0805,C15850,Basic,1,Local cell decoupling; actual pack/wiring inductance and charger stability to qualify.
+"B_CLDO_IN,B_CLDO_OUT",1uF,0603,C15849,Basic,2,Local MCU-supply capacitors per LDO requirements.
+"B_CD1,B_CD2,B_CD3,B_CD4,B_CD5,B_CD6,B_CNRST",100nF50V X7R,0603,C14663,Basic,7,Seven local decoupling/reset reservations; final allocation follows schematic.
+B_XTAL,8MHz CL12pF 20ppm KDS1C208000BC0R,3225-4P,C57131,Extended,1,Proposed8MHzCL12pF crystal for USB MCU; clock/startup and layout to qualify.
+"B_CXTAL1,B_CXTAL2",22pF50V C0G - INITIAL,0603,C1653,Basic,2,Initial22pF load-capacitor candidates; recalculate for crystal CL plus pin/trace capacitance.
+B_RFBH,100k1%,0603,C25803,Basic,1,TPS61023 upper feedback100kohm; with11kohm lower targets approximately5.045V.
+B_RFBL,11k1%,0603,C25950,Extended,1,TPS61023 lower feedback11kohm; output tolerance must fit USB and camera limits.
+"B_REN,B_RSWEN",100k,0603,C25803,Basic,2,Safe-default enable pull reservations; exact polarity and fault state follow final schematic.
+"B_RPG,B_RCHG,B_RFAULT,B_RID,B_RINT,B_RNRST,B_RBOOT",10k,0603,C25804,Basic,7,Seven logic pull-up/pull-down reservations; verify each IC pin and safe role state.
+"B_RSDA,B_RSCL",4.7k,0603,C23162,Basic,2,Battery-local gauge I2C pull-ups4.7kohm to3.3V.
+B_RISET,2k1%,0603,C22975,Basic,1,"2kohm1%; reviewed charge current about445mA typical, below500mA with tolerance; confirm exact datasheet."
+B_RILIM,3.48kohm1% - UNRESOLVED,0603,,UNRESOLVED,1,UNRESOLVED input-current-limit resistor; initial3.48kohm must be calculated for attached-source budget.
+B_RITERM,45mA termination target - UNRESOLVED,0603,,UNRESOLVED,1,UNRESOLVED charge-termination resistor; proposed45mA target requires calculation.
+B_RTMR,Timer resistor18-72kohm - UNRESOLVED,0603,,UNRESOLVED,1,UNRESOLVED charge timer resistor; choose after cell/current policy.
+"B_RUSB1,B_RUSB2",22ohm1% - INITIAL,0603,,UNRESOLVED,2,UNRESOLVED initial22ohm USB series reservations; use MCU USB-host reference/layout and signal-integrity requirements.
+"B_RD1,B_RD2",5.1k1%,0603,C23186,Basic,2,Two separate5.1kohm charge-input USB-C sink resistors. Output source uses its CC controller.
+"B_LED_CHG,B_LED_LOW",KT-0603R,0603,C2286,Basic,2,Local charge/low indication; not phone telemetry and not removed camera illumination block.
+"B_RLED1,B_RLED2",1k,0603,C21190,Basic,2,Two local indicator current-limit resistors; confirm brightness/current budget.
+"B_ESD_DATA,B_ESD_CC_OUT,B_ESD_CC_IN",USBLC6-2SC6,SOT23-6,C7519,Extended,3,"Three candidate ESD networks for data/CC; voltage/layout to qualify, not DC OVP."
+"B_ESD_VBUS_IN,B_ESD_VBUS_OUT","PESD5V0S1UL,315",SOD882,C85402,Extended,2,Candidate5V-class ESD diodes; maxUSB VBUS/leakage/clamp suitability unresolved.
+B_NTC,Cell-surface NTC10kohm - NETWORK UNQUALIFIED,EXTERNAL /2pads,,UNRESOLVED,1,EXTERNAL reservation: cell-surface10kohm NTC and network; charger window must match cell temperature limits.
+B_FUSE,Pack protection >=3A continuous with cell-approved thresholds,Cell PCM or separate fuse,,UNRESOLVED,1,EXTERNAL reservation: independent pack protection/fuse; qualify >=3A if advertising5V1.5A atlowcell. Cell cutoff thresholds must match manufacturer.
+B_S1,Maintained power switch - UNRESOLVED,UNRESOLVED FOOTPRINT,,UNRESOLVED,1,"EXTERNAL reservation: maintained power switch, exact circuit/mechanical choice open."
+B_RSWILIM,Source current limit15-17kohm1% - UNRESOLVED,0603,,UNRESOLVED,1,UNRESOLVED output current-limit resistor; initial15-17kohm is not approved until worst-case calculation.
+B_RVBUS_DIS,1k1%,0603,C21190,Basic,1,1kohm candidate source VBUS discharge path; switched/discharge timing and25mW running loss to qualify.

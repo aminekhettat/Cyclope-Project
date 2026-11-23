@@ -1,0 +1,37 @@
+designator,value,footprint,lcsc,type_basic_extended,qty,notes
+"C1,C2,C6,C7,C9,C14",10uF,0805-NO,C15850,Basic,6,Architecture2 camera proposal; retain bulk decoupling and rewire C6 to the redesigned 5V input. Not production CAD.
+"C4,C5,C10",1uF,0603-NO,C15849,Basic,3,"Retained local decoupling/reserve. C5 and R17 on IO47_DBLTAP are an unresolved reserve, not evidence of a fitted sensor."
+"C12,C15",100pF,0805-NO,C1790,Basic,2,Retained original 100pF values; camera-rail stability and final module requirements require review.
+"R1,R5,R8",5.1K,0603-NO,C23186,Basic,3,R1 ESP reset bias; R5 CC2 Rd; R8 CC1 Rd. Keep separate CC resistors.
+"R6,R11",1K,0603-NO,C21190,Basic,2,"Retain source functions; R11 is in camera Q1 gate bias, not the removed battery selector."
+R7,100K,0603-NO,C25803,Basic,1,Enable function retained; rewire for the selected new regulator topology.
+R17,1Meg,0603-NO,C22935,Basic,1,1Mohm reserve on IO47_DBLTAP; optional removal not counted.
+R66,10K,0603-NO,C25804,Basic,1,10kohm camera Q1 gate bias to 3.3V; distinct from Q3 battery selector.
+R3,10kohm x4 resistor array,RESPACK_4X0603,C29718,Basic,1,One physical four-resistor array. SCCB/I2C pull-up voltage and camera DOVDD require review.
+Q1,DMG3415U,SOT23-R,C7202986,Extended,1,Retained camera supply switch candidate; not Q3 battery/USB selector.
+IC2,ESP32-S3-WROOM-1-N16R8,ESP32S3WROOM1N16R8,C2913202,Extended,1,Retain ESP32-S3-WROOM-1-N16R8; Octal PSRAM affects available GPIO. Assembly/antenna requirements need qualification.
+IC3,XC6206P282MR-G,SOT95P280X130-3N,C2891263,Extended,1,"Existing 2.8V camera LDO, retained conditionally. Does not generate the proposed 1.5V core rail."
+J1,FH12-24S-0.5SH(55) - CONDITIONAL CANDIDATE,FH12 24p0.5mm bottom2mm - NEW FOOTPRINT,C202112,Extended,1,Conditional footprint/pinout. Choose module first; existing TE part stock-zero; proposed Hirose is not a drop-in substitute.
+X3,TYPE-C-31-M-12 - NEW USB2 FOOTPRINT,HRO TYPE-C-31-M-12 - NEW FOOTPRINT,C165948,Extended,1,5V sink and native USB flash. Architecture2 purchasing candidate needs new footprint review; not a raw-cell port.
+CONN1,XY-SM04B-SRSS-TB - CANDIDATE,SH4 RA1mm - CONDITIONAL FOOTPRINT,C51940130,Extended,1,"External I2C connector function; actual MPN/footprint and pinout to qualify. Architecture2 XYECONN is a candidate, not JST proof."
+"SW1,SW2",KMR232NGULCLFS,BTN_KMR2_4.6X2.8,C221681,Extended,2,"Two maintenance boot/reset switches, separate from user buttons. KMR232 candidate footprint must be checked."
+CAM_BUCK_U,TPS562201DDCR,TSOT23-6,C90061,Extended,1,"NEW 2A buck, Extended. Minimum4.5V input requires cable-drop validation. Not a raw-cell regulator."
+CAM_BUCK_L,"4.7uH, Irms3A Isat3.08A",6x6x2.8mm,C63353,Extended,1,"Proposed4.7uH inductor, Irms3A/Isat3.08A. Validate ripple, saturation, thermal and layout."
+CAM_BUCK_CB,100nF 50V X7R,0603,C14663,Basic,1,Bootstrap capacitor; use vendor layout and capacitor requirements.
+"CAM_BUCK_CO1,CAM_BUCK_CO2",22uF 25V X5R,0805,C45783,Basic,2,"Two output capacitors; validate effective capacitance, ripple and stability."
+CAM_BUCK_RH,33k 1%,0603,C4216,Basic,1,33kohm upper feedback; with10kohm lower and0.768V reference gives3.302V.
+CAM_BUCK_RL,10k 1%,0603,C25804,Basic,1,10kohm lower feedback; tolerance and regulator output accuracy require review.
+"BTN_U1,BTN_U2,BTN_U3,BTN_U4",KMR232NGULCLFS,KMR2 ULC + 3D cap,C221681,Extended,4,"Four user buttons GPIO9-12, 3D caps;2-4 buttons approved, count still to choose.3N ULC exact variant."
+"BTN_R1,BTN_R2,BTN_R3,BTN_R4",10k 1%,0603,C25804,Basic,4,"Four10kohm pull-ups to3.3V, buttons toGND. Firmware debounce proposed20-30ms."
+CAM_ESD_DATA,USBLC6-2SC6,SOT23-6,C7519,Extended,1,"Candidate USB data ESD network, not DC overvoltage protection."
+CAM_ESD_CC,USBLC6-2SC6,SOT23-6,C7519,Extended,1,"Candidate CC ESD network; qualify capacitance, voltage and layout."
+CAM_ESD_VBUS,"PESD5V0S1UL,315",SOD882 / DFN1006-2,C85402,Extended,1,Candidate5V-class ESD diode; max VBUS/leakage/clamp suitability unresolved; not a DC OVP solution.
+CAM_VDET_RH,100k 1%,0603,C25803,Basic,1,Optional VBUS detector100kohm upper resistor; regulated5V cannot measure SOC.
+CAM_VDET_RL,33k 1%,0603,C4216,Basic,1,Optional33kohm lower resistor; about1.24V at5V input. ADC GPIO allocation must not conflict with UART fallback.
+CAM_VDET_C,100nF,0603,C14663,Basic,1,Optional ADC filter. Does not provide advance low-battery warning or hold-up energy.
+CAM_CORE_U,TLV75515PDBVR - CONDITIONAL CANDIDATE,SOT23-5,C2867152,Extended,1,Conditional new1.5V500mA core LDO. Populate only after actual module rail requirements are proved.
+"CAM_CORE_CI,CAM_CORE_CO",1uF,0603,C15849,Basic,2,Two conditional core-LDO1uF capacitors; stability/effective capacitance per selected part.
+CAM_CORE_CD,100nF,0603,C14663,Basic,1,Conditional local core decoupling.
+CAM_DOVDD_CD,100nF,0603,C14663,Basic,1,Conditional local camera DOVDD decoupling; voltage depends on module.
+CAM_RESET_R,10k,0603,C25804,Basic,1,"Conditional camera reset pull-up; connect to qualified I/O rail, not assumed3.3V."
+CAM_RESET_C,100nF,0603,C14663,Basic,1,Conditional camera reset timing capacitor; module startup requirements to qualify.
