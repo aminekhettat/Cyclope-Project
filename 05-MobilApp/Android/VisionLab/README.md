@@ -16,7 +16,7 @@ A small Android learning app for Shanna. You can explore object detection withou
 8. Press **Start camera**, then allow Camera permission. No microphone permission is needed for speech.
 9. Press **Stop camera** when finished. Leaving the activity also stops the camera and speech.
 
-**Models are not bundled in this initial delivery.** You can explore device info, accessible controls, filters and camera preview immediately. Detection and spoken object names require a model. The status explains the missing filename. This is an expected state, not a download button or a simulated detector. See Model setup below.
+**YOLO26 nano and small float16 models are bundled.** Small is the default; nano is also available immediately after installation, with no model download. Allow the camera permission and press Start camera to use detection. Medium remains an optional export exercise: selecting it explains its missing filename and keeps the camera preview available. No detector output is simulated. Real-phone accuracy, acceleration and TalkBack still need the device walkthrough below.
 
 ## What to try
 
@@ -31,42 +31,58 @@ Do not choose the production model from a single FPS reading. Follow the [GEN 3 
 
 ## Model setup
 
-### Why this delivery has no weights
+### Bundled models and verified contract
 
-The development host is an ARM64 Raspberry Pi running Python 3.13. The first isolated export-toolchain attempt found no compatible `tensorflow-cpu` distribution. A second approach using the ARM `tensorflow` package reached large dependencies and timed out after three minutes. We did not install a multi-gigabyte stack on the shared host. Current Ultralytics also explicitly restricts its new LiteRT exporter to Linux x86 or macOS. No export completed and no model-runtime accuracy or device acceleration has been verified.
+The APK includes the official pretrained **COCO 80-class YOLO26 nano and small** weights, exported to TFLite float16 on GitHub Actions **Ubuntu x86 / Python 3.11**, not on the ARM development Pi. The exact sizes, source-weight SHA-256, export recipe and output SHA-256 are recorded in `app/src/main/assets/model-manifest.json`.
 
-There is a format change to understand. Current Ultralytics redirects `format="tflite"` to a newer `format="litert"` exporter. Legacy TensorFlow exports use NHWC input and normalized coordinates. Current litert-torch exports use NCHW input; end-to-end detection boxes use pixel coordinates. VisionLab supports both contracts explicitly. It does not guess units from box values.
+| Bundled asset | Bytes | Size (decimal MB) |
+| --- | ---: | ---: |
+| `yolo26n_float16.tflite` | 5,448,366 | 5.45 |
+| `yolo26s_float16.tflite` | 19,629,058 | 19.63 |
 
-### Reproducible starting procedure on Colab or Linux x86
+Export provenance: [manual run 45138993009](https://github.com/aminekhettat/Cyclope-Project/actions/runs/45138993009), commit `abef139`. The complete resolved toolchain is retained in `tools/export-environment-45138993009.txt`.
 
-Use a fresh **Python 3.11** environment, not the Pi system environment. This recipe pins a legacy exporter whose source still implements float16 TensorFlow export. The recipe is provided for execution on that environment; it was **not executed successfully on the Pi**.
+Both exports use **NHWC float32 `[1,640,640,3]` input in [0,1]**, float16 weights and **float32 `[1,300,6]` output**: normalized `x1,y1,x2,y2,score,classId`, end-to-end (no extra NMS). This is the existing `YoloEngine` / `YoloParser` contract; no model-name or parser workaround is needed. Normal CI verifies hashes, float16 tensors, the contract, built-in CPU operators and real inference on the checked-in official bus/person example. It also checks that the assembled APK contains byte-identical **uncompressed** assets, required by the memory-mapped loader. This is not a real-phone camera, speed or accuracy qualification.
+
+Medium is **not bundled**. Selecting it uses the existing missing-model explanation. Export it on Colab as Shanna's exercise and rebuild if needed. Never rename depth, segmentation, INT8 or custom-class weights to these filenames.
+
+### Regenerate manually on GitHub Actions
+
+The dedicated `.github/workflows/visionlab-export-models.yml` has **only `workflow_dispatch`**, never push/schedule triggers. The shared composite action pins the CPU toolchain, exports nano/small, smoke-tests them and publishes `visionlab-yolo26-float16`, including `model-manifest.json` and `export-environment.txt`. This does not commit or publish new weights automatically.
+
+GitHub cannot dispatch a newly added workflow that is absent from the default branch. On this teaching branch, use the already registered VisionLab CI workflow's **manual export-only input** (same composite action):
+
+```sh
+gh workflow run 427496876 --ref CYCLOPE_GEN3_AndroidVision -f export_models=true
+# Find the workflow_dispatch run ID, then download its artifact:
+gh run list --branch CYCLOPE_GEN3_AndroidVision --event workflow_dispatch
+gh run download RUN_ID --name visionlab-yolo26-float16 --dir /tmp/visionlab-export
+```
+
+Copy the two `.tflite` files and `model-manifest.json` from the artifact's `exported-models/` directory to `app/src/main/assets/`, review checksums and provenance, and rebuild. Export-only runs deliberately skip APK/quality jobs; they are **not** APK acceptance evidence. Normal branch pushes retain all quality gates and the real APK build. If the standalone workflow is later registered on the default branch, it can be dispatched directly by filename; changing that branch is outside this delivery.
+
+### Reproduce on Colab or Linux x86
+
+Use fresh **Python 3.11**, not the Pi Python 3.13 system environment. The previously attempted local ARM export did not complete. Current Ultralytics changed its exporter, so keep this tested legacy conversion stack pinned (complete transitive versions are in the export artifact):
 
 ```sh
 python3.11 -m venv .venv
 . .venv/bin/activate
-python -m pip install 'ultralytics==8.4.82' 'tensorflow==2.19.0'
-python tools/export_models.py --sizes s n m --destination app/src/main/assets
+python -m pip install torch==2.8.0 torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cpu
+python -m pip install 'ultralytics==8.4.82' 'tensorflow==2.19.0' 'tf-keras==2.19.0' 'onnx2tf==1.28.8' 'onnx==1.17.0' 'onnxruntime==1.23.2' 'onnxslim==0.1.82' 'sng4onnx==1.0.4' 'onnx-graphsurgeon==0.5.8' 'ai-edge-litert==1.4.0' 'protobuf>=5,<6'
+python tools/export_models.py --sizes n s --destination app/src/main/assets
+python tools/verify_models.py --smoke-image tools/testdata/bus.jpg
+# Optional medium exercise (not part of the bundled pair):
+python tools/export_models.py --sizes m --destination /tmp/visionlab-medium
 ```
 
-`quantize=16` selects float16 weights in this Ultralytics version. Image and detection tensors stay float32. First export only `--sizes s` if downloads or memory are limited. The exporter may install additional ONNX/TensorFlow conversion dependencies. Archive their actual versions (`python -m pip freeze`) with your measurements. If Colab already has conflicting dependencies, use a fresh runtime.
+The helper uses `format="tflite", quantize=16, end2end=True, nms=False, imgsz=640, batch=1, device="cpu"`. `quantize=16` is the float16-weight option in this version; image/output tensors remain float32. Official source URLs are `https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26n.pt` and `yolo26s.pt`. The helper checks the COCO labels and runs a finite-output smoke inference before copying. Keep medium's separate manifest for provenance; do not replace the bundled pair's manifest with a medium-only one. Models at or above **50,000,000 bytes** must stay team artifacts, not Git blobs.
 
-The helper downloads official pretrained COCO YOLO26 weights. It exports batch one, static 640 pixels, end-to-end detection, without additional NMS. It checks the 80-class list, tensor shapes, float I/O, and runs one smoke inference before copying each model. A successful smoke test verifies the tensor contract, not accuracy. Read the helper before running it. Network access is needed on the export computer only.
-
-Expected Android assets:
-
-```text
-app/src/main/assets/yolo26s_float16.tflite
-app/src/main/assets/yolo26m_float16.tflite
-app/src/main/assets/yolo26n_float16.tflite
-```
-
-Copy the files and rebuild the app. Do not rename an INT8, segmentation, custom-class, or depth model to these names. Medium will probably exceed 25 MB; record the measured size instead of committing a large binary. Models below 25 MB can be committed within the project scope after export validation. Keep larger models as local assets or download them from your team's agreed artifact storage, then copy them to the same directory. This app never downloads models automatically.
-
-For training and export context, see [GEN3 Colab training guide, section 7](../../../03-Vision/GEN3-colab-training-guide.md#7-export-for-the-phone-protocol-phase-2). That document describes the general workflow. The version-pinned helper here accounts for exporter API changes. For current exports on x86, consult the [official LiteRT integration](https://docs.ultralytics.com/integrations/litert/) and revalidate tensor/operator compatibility before adopting a new exporter/runtime pair.
+Expected assets are `yolo26n_float16.tflite`, `yolo26s_float16.tflite` and optionally `yolo26m_float16.tflite`. The app never downloads weights. See the [GEN3 Colab training guide](../../../03-Vision/GEN3-colab-training-guide.md#7-export-for-the-phone-protocol-phase-2) for training context. Before upgrading to the [current LiteRT exporter](https://docs.ultralytics.com/integrations/litert/), revalidate operators, runtime and tensors: newer NCHW exports use pixel coordinates, unlike these normalized NHWC exports.
 
 ### License
 
-Ultralytics code and YOLO weights are offered under AGPL-3.0 or an Enterprise license. AGPL can be used for this student project, with its obligations respected. Keep license notices and review distribution/source requirements when distributing the app. Future proprietary use needs a separate license decision. See [Ultralytics licensing](https://www.ultralytics.com/license). No weights are included here.
+Ultralytics code and YOLO weights are offered under AGPL-3.0 or an Enterprise license. AGPL can be used for this student project, with its obligations respected. Keep license notices and review distribution/source requirements when distributing the app. Future proprietary use needs a separate license decision. See [Ultralytics licensing](https://www.ultralytics.com/license). The bundled nano/small weights are AGPL-3.0 licensed; their upstream license is retained alongside them in the assets folder.
 
 ## Architecture: follow one frame
 
@@ -126,7 +142,7 @@ This checklist requires a real phone. It is not claimed as completed by CI.
 3. Open Device info. Read its text, then activate Close.
 4. Open Choose object classes. Check and uncheck items. Verify their announced checked state. Apply. Try Select none.
 5. Start the camera. Deny permission once. Check that the explanation is readable and other controls still work. Allow permission in Settings, then retry.
-6. Without models, verify the missing filename and setup explanation. With a model, verify that only selected classes appear in the detection summary.
+6. Select small and nano in turn: each bundled model should detect without an additional download. Verify that only selected classes appear in the detection summary. Select medium to verify the missing filename and setup explanation.
 7. With TalkBack active, verify that **raw app TTS is silent**, but object messages reach TalkBack through the polite detection region. Updates must not occur on every camera frame: object batches are at least ten seconds apart, metrics at least fifteen seconds apart. Use Read current detections for an immediate, user-requested announcement. Disable TalkBack and verify normal French TTS, per-class cooldowns and mute. Enable TalkBack while TTS is already speaking: raw speech must stop before accessibility routing starts. Test accessibility routing even if no French TTS voice is installed.
 8. Change model/delegate while running. Confirm the status or explicit failure/fallback. Press Stop, background the app, and rotate the phone. Verify there is no continuing camera or speech.
 9. Increase system font size and display size. All controls must remain reachable by scrolling. Interactive controls have at least 48 dp height. Boxes have labels and percentages, not color-only meaning. Text summaries do not require seeing the preview.
@@ -170,6 +186,6 @@ The Android app uses LiteRT's Interpreter-compatible 1.4.2 APIs. This deliberate
 
 The official `yolo26-depth.yaml`, `yolo26n-depth.pt` family and [Ultralytics depth task](https://docs.ultralytics.com/tasks/depth/) were confirmed upstream on 2026-11-23. It is a real task, not a made-up distance formula. Official task/export support does not establish that the provided depth model is calibrated for this phone or produces reliable metric object distances.
 
-Depth output is a dense depth map, not the COCO `[1,N,6]` detection output. Integration needs a separate model/contract, aligned preprocessing, robust object-region depth aggregation, and calibration/validation against known distances. It also doubles part of the compute/memory work. The shared Pi export limits prevented an actual export or device evaluation in this delivery.
+Depth output is a dense depth map, not the COCO `[1,N,6]` detection output. Integration needs a separate model/contract, aligned preprocessing, robust object-region depth aggregation, and calibration/validation against known distances. It also doubles part of the compute/memory work. Detection model export on x86 does not validate the separate depth model; no depth export or device evaluation is claimed.
 
 **Decision for V1: no depth implementation and no distance numbers.** In particular, bounding-box size is not used to invent meters. A future experiment may show relative near/far estimates or broad approximate ranges only after calibration and validation. Its screen must visibly say that monocular estimates are approximate and not a precise measurement. There is no centimeter claim and no hidden experimental switch in this app.

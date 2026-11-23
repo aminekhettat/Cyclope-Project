@@ -15,7 +15,9 @@ runs:
     - name: Export and smoke-test official nano and small models
       shell: bash
       working-directory: 05-MobilApp/Android/VisionLab
-      run: python tools/export_models.py --sizes n s --destination exported-models
+      run: |
+        python tools/export_models.py --sizes n s --destination exported-models
+        python tools/verify_models.py --assets exported-models --smoke-image tools/testdata/bus.jpg --report exported-models/model-smoke-report.json
     - name: Record complete environment
       if: always()
       shell: bash

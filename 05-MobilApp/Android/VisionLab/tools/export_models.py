@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Run on Linux x86/Colab in the README's isolated Python environment, not in Android."""
 import argparse
+import hashlib
+import os
 import json
+import platform
 import shutil
 from pathlib import Path
 
@@ -21,9 +24,10 @@ def main():
     args.destination.mkdir(parents=True, exist_ok=True)
     manifest = []
     for size in args.sizes:
-        model = YOLO(f"yolo26{size}.pt")
+        model = YOLO(f"https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26{size}.pt")
         if len(model.names) != 80 or model.names[0] != "person" or model.names[79] != "toothbrush":
             raise RuntimeError("Expected the official 80-class COCO detection weights")
+        source_hash = hashlib.sha256(Path(model.ckpt_path).read_bytes()).hexdigest()
         path = Path(model.export(format="tflite", quantize=16, nms=False, end2end=True, imgsz=640, batch=1, device="cpu"))
         runtime = tf.lite.Interpreter(model_path=str(path), num_threads=2)
         runtime.allocate_tensors()
@@ -41,13 +45,18 @@ def main():
         if not np.isfinite(output).all():
             raise RuntimeError("Non-finite values in smoke inference")
         dest = args.destination / f"yolo26{size}_float16.tflite"
+        if path.stat().st_size >= 50_000_000:
+            raise RuntimeError("Model exceeds the 50 MB repository limit; retain it as an artifact only")
         shutil.copy2(path, dest)
-        import hashlib
         info = {"file": dest.name, "bytes": dest.stat().st_size, "sha256": hashlib.sha256(dest.read_bytes()).hexdigest(), "input": ishape, "output": oshape, "ultralytics": ultralytics.__version__, "tensorflow": tf.__version__}
+        info.update({"source_url": f"https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26{size}.pt",
+                     "source_sha256": source_hash, "python": platform.python_version(),
+                     "export": {"format": "tflite", "quantize": 16, "nms": False, "end2end": True,
+                                "imgsz": 640, "batch": 1, "device": "cpu"},
+                     "export_commit": os.environ.get("GITHUB_SHA"),
+                     "export_run": f"https://github.com/{os.environ.get('GITHUB_REPOSITORY')}/actions/runs/{os.environ.get('GITHUB_RUN_ID')}" if os.environ.get("GITHUB_RUN_ID") else None})
         manifest.append(info)
         print(json.dumps(info))
-        if dest.stat().st_size >= 50_000_000:
-            print("Over 50 MB: keep as local asset/team artifact; do not commit this model.")
     (args.destination / "model-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
 
 
