@@ -1,0 +1,7 @@
+{
+  "core": "esp32:esp32",
+  "core_version": "4.0.0",
+  "index_url": "https://espressif.github.io/arduino-esp32/package_esp32_index.json",
+  "fqbn": "esp32:esp32:esp32s3:PSRAM=opi,FlashSize=16M",
+  "jobs": 2
+}
