@@ -37,13 +37,18 @@ void loop() {
 #define SIOD_GPIO_NUM    8
 #define SIOC_GPIO_NUM    9
 
-//wifi (pour le test c mon telephone...)
+//wifi (pour le test ca sera mon telephone...)
+
 //nom du reseau
 const char* ssid = "The's Galaxy A52s 5G";//The's Galaxy A52s 5G
 //mot de passe
 const char* password = "sbmw5997";//sbmw5997
-//http://192.168.247.197/
-//http://192.168.247.197/capture
+
+// /!\ IP peut changer d'un redémarage à un autre /!\
+//https://adresseIP/           //lien pour vérifier connexion
+//https://adresseIP/capture    //lien pour demander image
+//https://adresseIP/stream     //lien pour demander flux video
+
 
 //serveur HTTP
 WebServer server(80); //80 pour http...
@@ -86,12 +91,12 @@ bool initCamera() {
   return esp_camera_init(&config) == ESP_OK;
 }
 
-//c est pour la page d accueil
+//c'est pour la page d'acceuil
 void handleRoot() {
   server.send(200, "text/plain","serveur HTTP DFR1154 ok");//200 est la reponse HTTP pour dire que la requete a reussie
 }
 
-//capture et envo image JPEG
+//capture et envoie 1 image JPEG
 void handleCapture() {
   camera_fb_t *fb = esp_camera_fb_get();
 
@@ -114,6 +119,55 @@ void handleCapture() {
   client.stop();
 
   Serial.println("image envoyee");
+}
+
+//envoi continu d'images JPEG (flux MJPEG)
+void handleStream() {
+
+  WiFiClient client = server.client();
+
+  //entêtes HTTP indiquant qu'on envoie flux MJPEG
+  client.println("HTTP/1.1 200 OK");
+  client.println("Content-Type: multipart/x-mixed-replace; boundary=frame");
+  client.println("Access-Control-Allow-Origin: *");
+  client.println("Cache-Control: no-cache");
+  client.println("Connection: close");
+  client.println();
+
+  //tant que client connecté, on envoie des images
+  while (client.connected()) {
+
+    if (!client.connected()) {
+      break;
+    }
+
+    camera_fb_t *fb = esp_camera_fb_get();
+
+    if (!fb) {
+      Serial.println("erreur capture image");
+      delay(100);
+      continue;
+    }
+
+    //debut d'une nouvelle image dans le flux
+    client.println("--frame");
+    client.println("Content-Type: image/jpeg");
+    client.printf("Content-Length: %u\r\n", fb->len);
+    client.println();
+
+    //envoi des données JPEG
+    client.write(fb->buf, fb->len);
+    client.println();
+
+    //libération buffer pour la prochaine capture
+    esp_camera_fb_return(fb);
+
+    //delay pause entre deux images
+    delay(33);//en ms (pour 30fps => 33)
+  }
+
+  client.stop();
+  Serial.println("client deconnecte du stream");
 }
 
 void setup() {
@@ -143,6 +197,8 @@ void setup() {
 
   server.on("/", HTTP_GET, handleRoot);
   server.on("/capture", HTTP_GET, handleCapture);
+
+  server.on("/stream", HTTP_GET, handleStream);////
 
   server.begin();
 
