@@ -63,12 +63,27 @@ class ParserEdgeTest {
     }
 
     @Test
-    fun malformedContainersCurrentlyAbortParsingRatherThanDroppingTheRow() {
-        // Current robustness limitation: unlike invalid numeric strings, wrong JSON container types throw.
-        listOf("{}", "[null]", "[{\"lat\":{},\"lon\":2}]").forEach { body ->
+    fun malformedEntriesAreSkippedAndParsingContinues() {
+        // Policy: a bad entry (null element, non-primitive coordinate) is dropped, like an invalid numeric string.
+        listOf(
+            "[null]",
+            """[{"lat":{},"lon":2}]""",
+            """[{"lat":"48.0","lon":[]}]""",
+        ).forEach { body ->
+            assertTrue(NominatimParser.parse(body).isEmpty())
+        }
+        val places = NominatimParser.parse("""[null,{"lat":{},"lon":2},{"lat":"48.8","lon":"2.3"}]""")
+        assertEquals(48.8, places.single().point.lat, 0.0)
+        // Wrong-typed text fields are treated as missing; the entry itself is kept.
+        assertEquals(1, NominatimParser.parse("""[{"lat":"48.8","lon":"2.3","name":{},"display_name":[],"address":[]}]""").size)
+    }
+
+    @Test
+    fun malformedTopLevelResponseStillFailsLoudly() {
+        // Policy: if the whole response is not a JSON array, fail loudly instead of returning nothing.
+        listOf("{}", "[").forEach { body ->
             assertThrows(IllegalArgumentException::class.java) { NominatimParser.parse(body) }
         }
-        assertThrows(IllegalArgumentException::class.java) { NominatimParser.parse("[") }
     }
 
     @Test

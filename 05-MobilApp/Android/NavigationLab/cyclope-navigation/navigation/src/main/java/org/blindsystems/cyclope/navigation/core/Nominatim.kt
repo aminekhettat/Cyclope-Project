@@ -6,8 +6,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.JsonPrimitive
 import java.net.URLEncoder
 import java.util.Locale
 
@@ -60,15 +59,15 @@ object NominatimParser {
     fun parse(body: String, near: GeoPoint? = null): List<Place> {
         val arr: JsonArray = json.parseToJsonElement(body).jsonArray
         val places = arr.mapNotNull { el ->
-            val o = el.jsonObject
-            val lat = o["lat"]?.jsonPrimitive?.contentOrNull?.toDoubleOrNull() ?.takeIf { it.isFinite() } ?: return@mapNotNull null
-            val lon = o["lon"]?.jsonPrimitive?.contentOrNull?.toDoubleOrNull() ?.takeIf { it.isFinite() } ?: return@mapNotNull null
+            val o = el as? JsonObject ?: return@mapNotNull null
+            val lat = (o["lat"] as? JsonPrimitive)?.contentOrNull?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return@mapNotNull null
+            val lon = (o["lon"] as? JsonPrimitive)?.contentOrNull?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return@mapNotNull null
             val point = GeoPoint(lat, lon)
             Place(
-                displayName = o["display_name"]?.jsonPrimitive?.contentOrNull.orEmpty(),
+                displayName = (o["display_name"] as? JsonPrimitive)?.contentOrNull.orEmpty(),
                 spokenName = spokenName(o),
                 point = point,
-                importance = o["importance"]?.jsonPrimitive?.doubleOrNull ?: 0.0,
+                importance = (o["importance"] as? JsonPrimitive)?.doubleOrNull ?: 0.0,
                 distanceFromUserM = near?.let { Geo.distance(it, point) },
             )
         }
@@ -78,11 +77,11 @@ object NominatimParser {
 
     /** Builds a short, speakable label from the "address" object (addressdetails=1). */
     fun spokenName(o: JsonObject): String {
-        val a = o["address"]?.jsonObject
+        val a = o["address"] as? JsonObject
         fun field(vararg keys: String): String? =
-            keys.firstNotNullOfOrNull { k -> a?.get(k)?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() } }
+            keys.firstNotNullOfOrNull { k -> (a?.get(k) as? JsonPrimitive)?.contentOrNull?.takeIf { it.isNotBlank() } }
 
-        val name = o["name"]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() }
+        val name = (o["name"] as? JsonPrimitive)?.contentOrNull?.takeIf { it.isNotBlank() }
         val number = field("house_number")
         val street = field("road", "pedestrian", "footway", "path", "square", "place")
         val town = field("city", "town", "village", "municipality", "hamlet")
@@ -90,6 +89,6 @@ object NominatimParser {
 
         val streetPart = listOfNotNull(number, street).joinToString(" ").ifBlank { null }
         val parts = listOfNotNull(name?.takeIf { it != street }, streetPart, town, postcode).distinct()
-        return if (parts.isEmpty()) o["display_name"]?.jsonPrimitive?.contentOrNull.orEmpty() else parts.joinToString(", ")
+        return if (parts.isEmpty()) (o["display_name"] as? JsonPrimitive)?.contentOrNull.orEmpty() else parts.joinToString(", ")
     }
 }
