@@ -61,8 +61,8 @@ object NominatimParser {
         val arr: JsonArray = json.parseToJsonElement(body).jsonArray
         val places = arr.mapNotNull { el ->
             val o = el.jsonObject
-            val lat = o["lat"]?.jsonPrimitive?.contentOrNull?.toDoubleOrNull() ?: return@mapNotNull null
-            val lon = o["lon"]?.jsonPrimitive?.contentOrNull?.toDoubleOrNull() ?: return@mapNotNull null
+            val lat = o["lat"]?.jsonPrimitive?.contentOrNull?.toDoubleOrNull() ?.takeIf { it.isFinite() } ?: return@mapNotNull null
+            val lon = o["lon"]?.jsonPrimitive?.contentOrNull?.toDoubleOrNull() ?.takeIf { it.isFinite() } ?: return@mapNotNull null
             val point = GeoPoint(lat, lon)
             Place(
                 displayName = o["display_name"]?.jsonPrimitive?.contentOrNull.orEmpty(),

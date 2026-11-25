@@ -72,11 +72,18 @@ class ParserEdgeTest {
     }
 
     @Test
-    fun nonFiniteCoordinatesCurrentlyPassValidation_bugDocumentedForOwnerDecision() {
-        // Known bug candidate: WGS84 coordinates should be finite; preserve current behavior, do not fix production code.
-        val p = NominatimParser.parse("""[{"lat":"NaN","lon":"Infinity"}]""").single()
-        assertTrue(p.point.lat.isNaN())
-        assertEquals(Double.POSITIVE_INFINITY, p.point.lon, 0.0)
+    fun nonFiniteCoordinatesAreSkipped() {
+        // WGS84 coordinates must be finite: NaN/Infinity entries are dropped, like invalid numeric strings.
+        listOf(
+            """[{"lat":"NaN","lon":"2.0"}]""",
+            """[{"lat":"48.0","lon":"Infinity"}]""",
+            """[{"lat":"-Infinity","lon":"NaN"}]""",
+        ).forEach { body ->
+            assertTrue(NominatimParser.parse(body).isEmpty())
+        }
+        // A valid entry next to a non-finite one is still kept.
+        val places = NominatimParser.parse("""[{"lat":"NaN","lon":"2.0"},{"lat":"48.8","lon":"2.3"}]""")
+        assertEquals(48.8, places.single().point.lat, 0.0)
     }
 
     private fun osrm(

@@ -120,8 +120,9 @@ class InstructionFormatter(private val lang: Lang = Lang.FR) {
 
     fun routeSummary(route: Route): String {
         val minutes = maxOf(1, (route.durationS / 60.0).roundToInt())
-        return if (lang == Lang.FR) "Itinéraire calculé : ${distance(route.distanceM)}, environ $minutes minutes à pied."
-        else "Route found: ${distance(route.distanceM)}, about $minutes minutes on foot."
+        val unit = if (minutes == 1) "minute" else "minutes"
+        return if (lang == Lang.FR) "Itinéraire calculé : ${distance(route.distanceM)}, environ $minutes $unit à pied."
+        else "Route found: ${distance(route.distanceM)}, about $minutes $unit on foot."
     }
 
     fun offRoute(): String =

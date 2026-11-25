@@ -107,9 +107,14 @@ class InstructionFormatterEdgeTest {
         assertEquals("Puis continuez sur 50 mètres.", fr.thenContinue(50.0))
         assertEquals("Then continue for 50 meters.", en.thenContinue(50.0))
         val route = Route(50.0, 0.0, emptyList(), emptyList())
-        // Known localization bug: singular duration still uses "minutes"; preserve pending owner decision.
-        assertEquals("Itinéraire calculé : 50 mètres, environ 1 minutes à pied.", fr.routeSummary(route))
-        assertEquals("Route found: 50 meters, about 1 minutes on foot.", en.routeSummary(route))
+        // Durations that round to one minute use the singular form.
+        assertEquals("Itinéraire calculé : 50 mètres, environ 1 minute à pied.", fr.routeSummary(route))
+        assertEquals("Route found: 50 meters, about 1 minute on foot.", en.routeSummary(route))
+        val oneMinute = Route(50.0, 60.0, emptyList(), emptyList())
+        assertEquals("Route found: 50 meters, about 1 minute on foot.", en.routeSummary(oneMinute))
+        val twoMinutes = Route(50.0, 120.0, emptyList(), emptyList())
+        assertEquals("Itinéraire calculé : 50 mètres, environ 2 minutes à pied.", fr.routeSummary(twoMinutes))
+        assertEquals("Route found: 50 meters, about 2 minutes on foot.", en.routeSummary(twoMinutes))
         assertEquals("Attention, vous vous éloignez de l'itinéraire. Recalcul en cours.", fr.offRoute())
         assertEquals("Warning, you are leaving the route. Recalculating.", en.offRoute())
         assertEquals("Vous êtes de nouveau sur l'itinéraire.", fr.backOnRoute())
