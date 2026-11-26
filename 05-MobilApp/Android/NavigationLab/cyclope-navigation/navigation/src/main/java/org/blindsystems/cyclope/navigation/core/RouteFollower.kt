@@ -40,6 +40,15 @@ data class FollowerConfig(
     val arrivalDistanceM: Double = 12.0,
     /** We never snap the user more than this far *backwards* along the route. */
     val backtrackToleranceM: Double = 30.0,
+    /**
+     * Two manoeuvres closer than this are announced in ONE sentence
+     * ("tournez à gauche, puis 5 mètres plus loin, tournez à droite"). OSRM foot routes often
+     * contain such short steps (sidewalk -> crossing -> sidewalk); said separately they sound like
+     * "left!" immediately followed by "right!", which is confusing.
+     */
+    val combineDistanceM: Double = 20.0,
+    /** After a weak-GPS warning, "GPS recovered" needs at least this accuracy (hysteresis: no on/off flapping). */
+    val gpsRecoveredAccuracyM: Double = 25.0,
 )
 
 /** Snapshot for the UI / logs. */
@@ -87,6 +96,8 @@ class RouteFollower(
     private var lastCrossTrack = 0.0
     private var nextStep = if (steps.size > 1) 1 else 0
     private val prepared = HashSet<Int>()
+    /** Manoeuvres already said inside the previous sentence and too close to get their own "Maintenant". */
+    private val announcedEarly = HashSet<Int>()
     private var offRouteCount = 0
     private var offRoute = false
     private var gpsWeak = false
@@ -107,10 +118,9 @@ class RouteFollower(
     fun start(): List<GuidanceEvent> {
         val events = mutableListOf<GuidanceEvent>(GuidanceEvent.RouteStarted(formatter.routeSummary(route)))
         if (steps.isNotEmpty()) {
-            val first = steps[0]
-            val text = formatter.now(first).removePrefix("Maintenant, ").removePrefix("Now, ")
+            val text = nowMessage(0).removePrefix("Maintenant, ").removePrefix("Now, ")
                 .replaceFirstChar { it.uppercase() }
-            events += GuidanceEvent.Now(0, withContinuation(text, 0))
+            events += GuidanceEvent.Now(0, text)
         }
         return events
     }
@@ -131,7 +141,7 @@ class RouteFollower(
             }
             return events
         }
-        if (gpsWeak) {
+        if (gpsWeak && accuracyM <= config.gpsRecoveredAccuracyM) {
             gpsWeak = false
             events += GuidanceEvent.GpsRecovered(formatter.gpsRecovered())
         }
@@ -174,16 +184,39 @@ class RouteFollower(
                 break
             }
             if (toNext <= config.nowDistanceM) {
-                events += GuidanceEvent.Now(nextStep, withContinuation(formatter.now(step), nextStep))
+                // Skipped if it was already said together with the previous manoeuvre.
+                if (nextStep !in announcedEarly) events += GuidanceEvent.Now(nextStep, nowMessage(nextStep))
                 nextStep++
                 continue // maybe the following manoeuvre is also close
             }
             if (toNext <= config.prepareDistanceM && prepared.add(nextStep)) {
-                events += GuidanceEvent.Prepare(nextStep, toNext, formatter.prepare(step, toNext))
+                events += GuidanceEvent.Prepare(nextStep, toNext, prepareMessage(nextStep, toNext))
             }
             break
         }
         return events
+    }
+
+    /** The manoeuvre right after [i] if it is so close that both must be said together, else null. */
+    private fun closePartner(i: Int): Int? {
+        val j = i + 1
+        if (j >= steps.lastIndex) return null // never merge with the arrival
+        return if (stepAlongM[j] - stepAlongM[i] < config.combineDistanceM) j else null
+    }
+
+    private fun prepareMessage(i: Int, toNext: Double): String {
+        val j = closePartner(i) ?: return formatter.prepare(steps[i], toNext)
+        prepared.add(j) // no separate "Dans 10 mètres, ..." for it
+        return formatter.prepare(steps[i], toNext, steps[j], stepAlongM[j] - stepAlongM[i])
+    }
+
+    private fun nowMessage(i: Int): String {
+        val j = closePartner(i) ?: return withContinuation(formatter.now(steps[i]), i)
+        val gap = stepAlongM[j] - stepAlongM[i]
+        prepared.add(j)
+        // Closer than the "Maintenant" distance: its own "Maintenant" would come right after this one.
+        if (gap <= config.nowDistanceM) announcedEarly.add(j)
+        return withContinuation(formatter.now(steps[i], steps[j], gap), j)
     }
 
     /** After a manoeuvre, if the next one is far, tell the user how long to keep going. */

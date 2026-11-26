@@ -99,12 +99,25 @@ class InstructionFormatter(private val lang: Lang = Lang.FR) {
         }
     }
 
-    /** "Dans 50 mètres, tournez à gauche sur Rue X." */
-    fun prepare(step: RouteStep, distanceM: Double): String = when {
+    /**
+     * ", puis 5 mètres plus loin, tournez à droite" — appended when the next manoeuvre comes
+     * only a few metres after this one, so the user hears both turns in one sentence.
+     */
+    private fun thenSoon(next: RouteStep?, gapM: Double): String = when {
+        next == null -> ""
+        lang == Lang.FR -> ", puis ${distance(gapM)} plus loin, ${action(next)}"
+        else -> ", then ${distance(gapM)} later, ${action(next)}"
+    }
+
+    /**
+     * "Dans 50 mètres, tournez à gauche sur Rue X."
+     * With [next]: "Dans 50 mètres, tournez à gauche, puis 5 mètres plus loin, tournez à droite sur Rue Y."
+     */
+    fun prepare(step: RouteStep, distanceM: Double, next: RouteStep? = null, gapM: Double = 0.0): String = when {
         step.type == "arrive" && lang == Lang.FR -> "Destination dans ${distance(distanceM)}${side(step.modifier)}."
         step.type == "arrive" -> "Destination in ${distance(distanceM)}${side(step.modifier)}."
-        lang == Lang.FR -> "Dans ${distance(distanceM)}, ${action(step)}."
-        else -> "In ${distance(distanceM)}, ${action(step)}."
+        lang == Lang.FR -> "Dans ${distance(distanceM)}, ${action(step)}${thenSoon(next, gapM)}."
+        else -> "In ${distance(distanceM)}, ${action(step)}${thenSoon(next, gapM)}."
     }
 
     /** "Puis continuez sur 200 mètres." */
@@ -112,11 +125,11 @@ class InstructionFormatter(private val lang: Lang = Lang.FR) {
         if (lang == Lang.FR) "Puis continuez sur ${distance(distanceM)}."
         else "Then continue for ${distance(distanceM)}."
 
-    /** "Maintenant, tournez à gauche sur Rue X." */
-    fun now(step: RouteStep): String =
+    /** "Maintenant, tournez à gauche sur Rue X." (+ the very close next manoeuvre, see [prepare]). */
+    fun now(step: RouteStep, next: RouteStep? = null, gapM: Double = 0.0): String =
         if (step.type == "arrive") action(step).replaceFirstChar { it.uppercase() } + "."
-        else if (lang == Lang.FR) "Maintenant, ${action(step)}."
-        else "Now, ${action(step)}."
+        else if (lang == Lang.FR) "Maintenant, ${action(step)}${thenSoon(next, gapM)}."
+        else "Now, ${action(step)}${thenSoon(next, gapM)}."
 
     fun routeSummary(route: Route): String {
         val minutes = maxOf(1, (route.durationS / 60.0).roundToInt())
